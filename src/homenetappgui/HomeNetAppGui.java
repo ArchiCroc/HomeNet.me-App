@@ -10,6 +10,10 @@
  */
 package homenetappgui;
 import java.util.*;
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.plaf.basic.*;
+
 /**
  *
  * @author mdoll
@@ -18,7 +22,11 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     /** Creates new form HomeNetAppGui */
     public HomeNetAppGui() {
+        
+        homenetapp = new HomeNetApp();
         initComponents();
+       
+        setupCommands();
         SetupMenuSerialPorts();
         AboutDialog.setLocationRelativeTo(null);
         SendPacketFrame.setLocationRelativeTo(null);
@@ -37,19 +45,19 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         AboutDialog = new javax.swing.JDialog();
         jOptionPane1 = new javax.swing.JOptionPane();
         SendPacketFrame = new javax.swing.JFrame();
-        jButton1 = new javax.swing.JButton();
+        sendPacketButton = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jSpinner1 = new javax.swing.JSpinner();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox();
-        jLabel6 = new javax.swing.JLabel();
+        toNodeLabel = new javax.swing.JLabel();
+        toNodeSpinner = new javax.swing.JSpinner();
+        toDeviceLabel = new javax.swing.JLabel();
+        toDeviceSpinner = new javax.swing.JSpinner();
+        fromNodeLabel = new javax.swing.JLabel();
+        fromNodeSpinner = new javax.swing.JSpinner();
+        fromDeviceSpinner = new javax.swing.JLabel();
+        commandLabel = new javax.swing.JLabel();
+        commandComboBox = new javax.swing.JComboBox();
+        payloadLabel = new javax.swing.JLabel();
         payloadTextField = new javax.swing.JTextField();
-        jSpinner2 = new javax.swing.JSpinner();
-        jSpinner3 = new javax.swing.JSpinner();
         jSpinner4 = new javax.swing.JSpinner();
         jSplitPane1 = new javax.swing.JSplitPane();
         SettingsDialog = new javax.swing.JDialog();
@@ -108,34 +116,35 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         SendPacketFrame.setMinimumSize(new java.awt.Dimension(380, 240));
         SendPacketFrame.setResizable(false);
 
-        jButton1.setText("Send");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        sendPacketButton.setText("Send");
+        sendPacketButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                sendPacketButtonActionPerformed(evt);
             }
         });
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Packet"));
 
-        jLabel1.setText("To Node: ");
+        toNodeLabel.setText("To Node: ");
 
-        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(0, 0, 4095, 1));
+        toNodeSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 4095, 1));
 
-        jLabel2.setText("To Device:");
+        toDeviceLabel.setText("To Device:");
 
-        jLabel3.setText("From Node:");
+        toDeviceSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 15, 1));
 
-        jLabel4.setText("From Device:");
+        fromNodeLabel.setText("From Node:");
 
-        jLabel5.setText("Command:");
+        fromNodeSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 4095, 1));
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        fromDeviceSpinner.setText("From Device:");
 
-        jLabel6.setText("Payload:");
+        commandLabel.setText("Command:");
 
-        jSpinner2.setModel(new javax.swing.SpinnerNumberModel(0, 0, 4095, 1));
+        commandComboBox.setModel(new javax.swing.DefaultComboBoxModel(homenetapp.getCommandKeys()));
+        commandComboBox.setRenderer(new CommandRenderer());
 
-        jSpinner3.setModel(new javax.swing.SpinnerNumberModel(0, 0, 15, 1));
+        payloadLabel.setText("Payload:");
 
         jSpinner4.setModel(new javax.swing.SpinnerNumberModel(0, 0, 15, 1));
 
@@ -146,24 +155,24 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(10, 10, 10)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel6)
-                    .addComponent(jLabel5)
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel1))
+                    .addComponent(payloadLabel)
+                    .addComponent(commandLabel)
+                    .addComponent(fromNodeLabel)
+                    .addComponent(toNodeLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(commandComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jSpinner1)
-                            .addComponent(jSpinner2))
+                            .addComponent(toNodeSpinner)
+                            .addComponent(fromNodeSpinner))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jLabel4)
-                            .addComponent(jLabel2))
+                            .addComponent(fromDeviceSpinner)
+                            .addComponent(toDeviceLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jSpinner3, 0, 0, Short.MAX_VALUE)
+                            .addComponent(toDeviceSpinner, 0, 0, Short.MAX_VALUE)
                             .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, 37, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 2, Short.MAX_VALUE))
                     .addComponent(payloadTextField))
@@ -174,24 +183,24 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2)
-                    .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(toNodeLabel)
+                    .addComponent(toNodeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(toDeviceLabel)
+                    .addComponent(toDeviceSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel4)
+                    .addComponent(fromNodeLabel)
+                    .addComponent(fromNodeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(fromDeviceSpinner)
                     .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
+                    .addComponent(commandComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(commandLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(payloadTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6))
+                    .addComponent(payloadLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -202,7 +211,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             .addGroup(SendPacketFrameLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(SendPacketFrameLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton1)
+                    .addComponent(sendPacketButton)
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -212,7 +221,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1)
+                .addComponent(sendPacketButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -464,9 +473,9 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         SendPacketFrame.setVisible(true);
     }//GEN-LAST:event_menuToolsSendPacketActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void sendPacketButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendPacketButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_sendPacketButtonActionPerformed
 
     private void menuHelpOnlineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpOnlineActionPerformed
         
@@ -498,6 +507,42 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     
     }//GEN-LAST:event_menuHelpOnlineActionPerformed
+
+    private void setupCommands(){
+       // homenetapp.commands
+                
+//       for (Map.Entry<Integer, String[]> entry : homenetapp.commands.entrySet()) {
+//         Integer key = entry.getKey();
+//         String[] value = entry.getValue();
+//            // ...
+//        }
+
+    }
+    
+    class CommandRenderer extends BasicComboBoxRenderer {
+
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+Integer item = (Integer) value;
+            if (value != null) {
+               // Integer item = (Integer) value;
+                setText(homenetapp.commands.get(item)[1]);
+                return this;
+            }
+
+            if (index == -1) {
+              //  setText("Select Command");
+                // Item item = (Item) value;
+              //  setText("index -1");// + item.getId()
+              //  System.out.println(homenetapp.commands.get(item)[1]);
+            }
+
+
+            return this;
+        }
+    }
+    
+    
 
     
     private void SetupMenuSerialPorts(){
@@ -568,14 +613,11 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JDialog SettingsDialog;
     private javax.swing.JLabel apiKeyLabel;
     private javax.swing.JTextField apiKeyTextField;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JComboBox jComboBox1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
+    private javax.swing.JComboBox commandComboBox;
+    private javax.swing.JLabel commandLabel;
+    private javax.swing.JLabel fromDeviceSpinner;
+    private javax.swing.JLabel fromNodeLabel;
+    private javax.swing.JSpinner fromNodeSpinner;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
@@ -588,9 +630,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSpinner jSpinner1;
-    private javax.swing.JSpinner jSpinner2;
-    private javax.swing.JSpinner jSpinner3;
     private javax.swing.JSpinner jSpinner4;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
@@ -604,15 +643,22 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JMenu menuTools;
     private javax.swing.JMenuItem menuToolsSendPacket;
     private javax.swing.JMenuItem menuToolsSettings;
+    private javax.swing.JLabel payloadLabel;
     private javax.swing.JTextField payloadTextField;
     private javax.swing.JLabel portLabel;
     private javax.swing.JTextField portTextField;
+    private javax.swing.JButton sendPacketButton;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JTextField serverTextField;
     private javax.swing.JButton settingsSaveButton;
+    private javax.swing.JLabel toDeviceLabel;
+    private javax.swing.JSpinner toDeviceSpinner;
+    private javax.swing.JLabel toNodeLabel;
+    private javax.swing.JSpinner toNodeSpinner;
     // End of variables declaration//GEN-END:variables
  //hash map ports
     
+    private HomeNetApp homenetapp;
 //selected ports    
     
 }
