@@ -114,6 +114,7 @@ public class HomeNet {
 //schedule timer (millis)  = DEVICE_SCHEDULE * DEVICE_UPDATE;
     final int DEVICE_SCHEDULE = 1;
     final int NODE_BOOT_TIME = 3000;
+    final int SERIAL_SPEED = 115200;
     int InterruptCount = 0;
 
 //payload type
@@ -477,11 +478,11 @@ public class HomeNet {
         protected boolean _sending;// = false;
         protected boolean _receiving;// = false;
         boolean started;
-        long time_added;
+        long timeAdded;
 
         Port(HomeNet.Stack homeNet) {
             _homeNet = homeNet;
-            time_added = System.currentTimeMillis(); //might need to offset or use java datetime
+            timeAdded = System.currentTimeMillis(); //might need to offset or use java datetime
             started = false;
         }
 
@@ -558,14 +559,26 @@ public class HomeNet {
     class Stack {
 
         public int _nodeId;
-        private List<Packet> _packets = new Vector(10);
-        private Hashtable<String, Port> _ports;// = new HashMap();
-        private Hashtable<Integer, Device> _devices;// = new HashTable();
-        private List<Schedule> _deviceSchedule = new Vector();
-        private List<Interrupt> _deviceInterrupts = new Vector();
+        private ArrayList<Packet> _packets = new ArrayList();
+        private HashMap<String, Port> _ports = new HashMap();
+        private HashMap<Integer, Device> _devices = new HashMap();
+        private ArrayList<Schedule> _deviceSchedule = new ArrayList();
+        private ArrayList<Interrupt> _deviceInterrupts = new ArrayList();
         private int _uniqueId;
         private int _scheduleCount;
         private long _deviceTimer;
+
+        public void addPort(String name, Port port) {
+            _ports.put(name, port);
+        }
+
+        public void removePort(String name) {
+            _ports.remove(name);
+        }
+
+        public HashMap getPorts() {
+            return _ports;
+        }
 
         private int _getId() {
             if (_uniqueId == 255) {
@@ -594,7 +607,12 @@ public class HomeNet {
             _uniqueId = 0;
         }
 
-        public void init(Hashtable ports, Hashtable devices) {
+        public void init() {
+            _ports = new HashMap();
+            _devices = new HashMap();
+        }
+
+        public void init(HashMap ports, HashMap devices) {
             _ports = ports;
             _devices = devices;
             //setup ports
@@ -742,7 +760,7 @@ public class HomeNet {
                         if (_ports.get(packet.toPort).started == true) {
                             System.out.println("Status: Packet Sending: " + packet.toPort);
                             _ports.get(packet.toPort).send(packet);
-                        } else if (_ports.get(packet.toPort).time_added + NODE_BOOT_TIME < System.currentTimeMillis()) {
+                        } else if (_ports.get(packet.toPort).timeAdded + NODE_BOOT_TIME < System.currentTimeMillis()) {
                             _ports.get(packet.toPort).started = true;
                             //@todo display message
                             //msg("Serial Port " + packet.toPort + " Started");
@@ -961,197 +979,186 @@ public class HomeNet {
 
     };
 
-class PortSerial extends Port {
-//
-//        private int _ptr;
-//        private Serial _serial;
-//        private int _receivingChecksum;
-//        private Packet _sendingPacket;
-//        private Packet _receivingPacket;
-//        private int _sendingRetryCount;
-//        private long _receivingTimer;
-//        private long _sendingTimer;
+    class PortSerial extends Port {
+
+        private int _ptr;
+        private Serial _serial;
+        private int _receivingChecksum;
+        private Packet _sendingPacket;
+        private Packet _receivingPacket;
+        private int _sendingRetryCount;
+        private long _receivingTimer;
+        private long _sendingTimer;
 //
 
-        PortSerial(HomeNet.Stack homeNet/*, Serial s*/) {
+        PortSerial(HomeNet.Stack homeNet, Serial s) {
             super(homeNet);
-//            _serial = s;
+            _serial = s;
         }
 
         @Override
         public void init(String id) {
-//            _sending = false;
-//            _receiving = false;
-//            _id = id;
-//            _receivingChecksum = 0;
-//            _ptr = 0;
-//            //Serial.begin(SERIAL_SPEED); 
+            _sending = false;
+            _receiving = false;
+            _id = id;
+            _receivingChecksum = 0;
+            _ptr = 0;
+            _serial.begin(SERIAL_SPEED);
         }
-//
 
         @Override
         public void send(Packet packet) {
-//            if (_sending == false) {
-//                _sending = true;
-//                //copy pointer
-//                _sendingRetryCount = 0;
-//            }
-//            _sendingTimer = millis();
-//            _sendingPacket = packet;
-//
-//            print("Sending: ");
-//            for (int i = 0; i < packet.getLength(); i++) {
-//                print(int
-//                (packet.data[i]
-//                )+",");
-//             try {
-//                    _serial.write(packet.data[i]);
-//                } catch (Exception e) {
-//                    msg("Exception Caught: " + e);
-//                    stop();
-//                    ports.remove(getId());
-//                    return;
-//                }
-//
-//            }
-//            System.out.println("");
-//            packet.setStatus(STATUS_SENT);
+            if (_sending == false) {
+                _sending = true;
+                //copy pointer
+                _sendingRetryCount = 0;
+            }
+            _sendingTimer = System.currentTimeMillis();
+            _sendingPacket = packet;
+
+            System.out.print("Sending: ");
+            for (int i = 0; i < packet.getLength(); i++) {
+                System.out.print((int) packet.data[i] + ",");
+                try {
+                    _serial.write(packet.data[i]);
+                } catch (Exception e) {
+                    System.out.print("Exception Caught: " + e);
+                    stop();
+                    _homeNet.removePort(getId());
+                    return;
+                }
+
+            }
+            System.out.println("");
+            packet.setStatus(STATUS_SENT);
         }
 
         @Override
         public void stop() {
-//            _serial.stop();
-//            System.out.println("stopping port");
+            _serial.end();
+            System.out.println("stopping port");
         }
 
         @Override
         public void receive() {
-//
-//            while (_serial.available() > 0) {
-//                int byteIn;
-//                //  try {
-//                byteIn = _serial.read();
-//                //      } catch (Exception e) {
-//                //    System.out.println("caught exception 2");
-//                //    stop();
-//                //   ports.remove(getId());
-//                //   return;
-//                //    }
-//
-//                if (_ptr == 0) { //new byte in
-//
-//
-//                    if (byteIn <= 2) { //resend last
-//                        if (_sending == true) {
-//                            _sendingPacket.setStatus(STATUS_SENDING);
-//                        }
-//                        return;
-//                    }
-//                    if (byteIn == 255) { //aknowledge
-//                        if (_sending == true) {
-//                            _sendingPacket.setStatus(STATUS_SUCCESS);
-//                            _sending = false; //allow next packet to send
-//                            _ptr = 0;
-//                        }
-//                        return;
-//                    }
-//
-//                    if ((byteIn < 10) || (byteIn > 66)) { //bad byte, send 0 to start over
-//                        _serial.clear();
-//                        //   try { 
-//                        _serial.write(0);
-//                        //} catch (Exception e){ }
-//                        return;
-//                    }
-//
-//
-//                    _receiving = true;
-//                    _receivingTimer = millis();
-//                    _receivingPacket = _homeNet._getNewPacket();
-//                    print("Receiving: ");
-//                    _receivingPacket.setFromPort(_id);
-//                    _receivingPacket.received = new Date();
-//                    _receivingPacket.setLength(byteIn);
-//                    _receivingPacket.setStatus(STATUS_RECEVING);
-//                    _receivingChecksum = 0;
-//                }
-//                print(byteIn + ",");
-//                buildPacket(byteIn);
-//            }
-//
-//            //process_stack();
-//            //check to see if Packet timed out
-//            if ((_receiving == true) && ((millis() - _receivingTimer) > PACKET_TIMEOUT)) {
-//                System.out.println("Recieving Packet Timed Out");
-//                _receivingPacket.setStatus(STATUS_CLEAR);
-//                _receiving = false;
-//
-//                //Serial.flush();
-//                _serial.write(0); //tell the node to resend last
-//            }
-//            //since this loops every cycle
-//            //might be better to move this to it's own function so it clearer
-//            //check for packets that are taking too long to veryify that they sent
-//
-//
-//            if ((_sending == true) && ((millis() - _sendingTimer) > PACKET_TIMEOUT)) {
-//                System.out.println("Sending Packet Timed Out");
-//                _sendingRetryCount++;
-//                if (_sendingRetryCount <= PACKET_RETRY) {
-//                    _sendingPacket.setStatus(STATUS_SENDING);
-//
-//                } else {
-//                    _sendingPacket.setStatus(STATUS_FAILED);
-//                    _sending = false;
-//                }
-//            }
+
+            while (_serial.available() > 0) {
+                int byteIn;
+                try {
+                    byteIn = _serial.read();
+                } catch (Exception e) {
+                    System.out.println("caught exception 2");
+                    stop();
+                    _homeNet.removePort(getId());
+                    return;
+                }
+
+                if (_ptr == 0) { //new byte in
+
+
+                    if (byteIn <= 2) { //resend last
+                        if (_sending == true) {
+                            _sendingPacket.setStatus(STATUS_SENDING);
+                        }
+                        return;
+                    }
+                    if (byteIn == 255) { //aknowledge
+                        if (_sending == true) {
+                            _sendingPacket.setStatus(STATUS_SUCCESS);
+                            _sending = false; //allow next packet to send
+                            _ptr = 0;
+                        }
+                        return;
+                    }
+
+                    if ((byteIn < 10) || (byteIn > 66)) { //bad byte, send 0 to start over
+                        _serial.flush();
+                        //   try { 
+                        _serial.write(0);
+                        //} catch (Exception e){ }
+                        return;
+                    }
+
+
+                    _receiving = true;
+                    _receivingTimer = System.currentTimeMillis();
+                    _receivingPacket = _homeNet._getNewPacket();
+                    System.out.print("Receiving: ");
+                    _receivingPacket.setFromPort(_id);
+                    _receivingPacket.received = new Date();
+                    _receivingPacket.setLength(byteIn);
+                    _receivingPacket.setStatus(STATUS_RECEVING);
+                    _receivingChecksum = 0;
+                }
+                System.out.print(byteIn + ",");
+                buildPacket(byteIn);
+            }
+
+            //process_stack();
+            //check to see if Packet timed out
+            if ((_receiving == true) && ((System.currentTimeMillis() - _receivingTimer) > PACKET_TIMEOUT)) {
+                System.out.println("Recieving Packet Timed Out");
+                _receivingPacket.setStatus(STATUS_CLEAR);
+                _receiving = false;
+
+                //Serial.flush();
+                _serial.write(0); //tell the node to resend last
+            }
+            //since this loops every cycle
+            //might be better to move this to it's own function so it clearer
+            //check for packets that are taking too long to veryify that they sent
+
+
+            if ((_sending == true) && ((System.currentTimeMillis() - _sendingTimer) > PACKET_TIMEOUT)) {
+                System.out.println("Sending Packet Timed Out");
+                _sendingRetryCount++;
+                if (_sendingRetryCount <= PACKET_RETRY) {
+                    _sendingPacket.setStatus(STATUS_SENDING);
+
+                } else {
+                    _sendingPacket.setStatus(STATUS_FAILED);
+                    _sending = false;
+                }
+            }
         }
-//
-//        void buildPacket(int byteIn) {
-//
-//            if (_ptr < (_receivingPacket.getLength() - OFFSET_FOOTER)) { //add to check sum
-//                _receivingPacket.data[_ptr] = byte
-//                (byteIn
-//                );
-//          _receivingChecksum = _crc16_update(_receivingChecksum, byteIn);
-//                _ptr++;
-//                return;
-//            } else if (_ptr == (_receivingPacket.getLength() - OFFSET_FOOTER)) { //get first byte of checksum
-//                _receivingPacket.data[_ptr] = byte
-//                (byteIn
-//                );
-//          _ptr++;
-//                return;
-//            } else { //get second byte and check the checksum
-//                int checksum = int
-//                (_receivingPacket.data[_ptr - 1]
-//                );
-//          _receivingPacket.data[_ptr] = (byte) 
-//                (byteIn
-//                );
-//          checksum = (checksum << 8) | byteIn;
-//                System.out.println("");
-//                if (_receivingChecksum != checksum) {
-//                    //packet failed crc check
-//                    _receivingPacket.setStatus(STATUS_CLEAR);
-//                    _serial.clear();
-//                    _serial.write(0); //tell the node to resend last
-//                    System.out.println("Receive failed Checksum " + _receivingChecksum + " " + checksum);
-//                } else {
-//
-//                    _receivingPacket.setStatus(STATUS_RECEIVED);
-//                    //Serial.flush();
-//                    _serial.write(255); //tell the node the packet was successful
-//                    System.out.println("Receive Passed Checksum " + _receivingChecksum + " " + checksum);
-//                }
-//                //reset incomingPacket
-//            }
-//            //*/
-//            _receiving = false;
-//            _ptr = 0;
-//        }
+
+        void buildPacket(int byteIn) {
+
+            if (_ptr < (_receivingPacket.getLength() - OFFSET_FOOTER)) { //add to check sum
+                _receivingPacket.data[_ptr] = (byte) byteIn;
+                _receivingChecksum = _crc16_update(_receivingChecksum, byteIn);
+                _ptr++;
+                return;
+            } else if (_ptr == (_receivingPacket.getLength() - OFFSET_FOOTER)) { //get first byte of checksum
+                _receivingPacket.data[_ptr] = (byte) byteIn;
+                _ptr++;
+                return;
+            } else { //get second byte and check the checksum
+                int checksum = _receivingPacket.data[_ptr - 1] & 0xFF;
+                _receivingPacket.data[_ptr] = (byte) byteIn;
+                checksum = (checksum << 8) | (byteIn & 0xFF);
+                System.out.println("");
+                if (_receivingChecksum != checksum) {
+                    //packet failed crc check
+                    _receivingPacket.setStatus(STATUS_CLEAR);
+                    _serial.flush();
+                    _serial.write(0); //tell the node to resend last
+                    System.out.println("Receive failed Checksum " + _receivingChecksum + " " + checksum);
+                } else {
+
+                    _receivingPacket.setStatus(STATUS_RECEIVED);
+                    //Serial.flush();
+                    _serial.write(255); //tell the node the packet was successful
+                    System.out.println("Receive Passed Checksum " + _receivingChecksum + " " + checksum);
+                }
+                //reset incomingPacket
+            }
+            //*/
+            _receiving = false;
+            _ptr = 0;
+        }
     }
-//http://www.dynamicobjects.com/d2r/archives/003057.html
+    //http://www.dynamicobjects.com/d2r/archives/003057.html
     public static SimpleDateFormat ISO8601FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
     public static SimpleDateFormat RFC822DATEFORMAT = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
     public static SimpleDateFormat msgDateTimeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
