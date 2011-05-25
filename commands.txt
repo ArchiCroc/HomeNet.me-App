@@ -1,0 +1,39 @@
+00	ERROR		STRING	ACK 	
+01	VERSION		FLOAT	ACK	Get current version of firmware on the node
+03	BATTERY LEVEL	BLANK	ACK	Get current battery level
+04	FREE MEMORY	BLANK	ACK	Get current battery level
+33	PING 		STRING	PONG 	ACK	Send Test Ping, node should reply back pong
+3E	PONG 		STRING	ACK		Response to a Ping Command
+11	ACK 		BYTE 	BYTE 	Acknowledge Packet, letting the sender of a packet know that data arrived safely
+21	GET NOD EID	INT	ACK 	packetid 	BYTE 	Acknowledge Packet, letting the sender of a packet know that data arrived safely
+21	SET NODE ID	INT 	ACK	Get Node's current ID (Used with node 0 broadcast)
+23	GET DEVICE 	BYTE	ACK 	Get the device code for what is attached on the node
+24	SET DEVICE 	BYTE 	ACK 	Changes Device ID, used for initial setup
+B1	AUTO SEND START	INT	ACK 	Set up the node to automatically
+B2	AUTO SEND STOP 	INT 	ACK 	Stop auto sending sensor data
+C0	ON 		BYTE	ACK 	Simple Turn on
+C1	OFF 		BYTE	ACK 	Simple Turn Off
+C2	LEVEL 		BYTE	ACK 	Set a light to a level 0-255
+C3	CLEAR 		BYTE	ACK 	Clear LCD
+D0	GET VALUE	INT	ACK 	
+D1	GET BYTE 	BYTE	ACK 	
+D2	GET STRING 	STRING	ACK 	
+D3	GET INT 	INT	ACK 	
+D4	GET FLOAT 	FLOAT	ACK 	
+D5	GET LONG 	LONG	ACK
+D6	GET BINARY	BINARY	ACK
+E0	SET VALUE 	INT 	ACK 
+E1	SET BYTE 	BYTE	ACK 	
+E2	SET STRING 	STRING	ACK 	
+E3	SET INT 	INT	ACK 	
+E4	SET FLOAT 	FLOAT	ACK 	
+E5	SET LONG 	LONG	ACK
+E6	SET BINARY	BINARY	ACK
+F0	REPLY VALUE 	BYTE	ACK
+F1	REPLY BYTE 	BYTE	ACK 	
+F2	REPLY STRING 	STRING	ACK 	
+F3	REPLY INT 	INT	ACK 	
+F4	REPLY FLOAT 	FLOAT	ACK 	
+F5	REPLY LONG 	LONG	ACK
+F6	REPLY BINARY	BINARY	ACK
+FF	REPLY ERROR	BINARY	ACK

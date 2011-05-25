@@ -1,0 +1,13 @@
+# settings
+settings.apikey = test1234
+settings.port = 2443
+settings.server = homenet.me
+
+# ports
+ports.serial = COM1,COM2
+
+# sslcert
+ssl.local.crt = 
+ssl.local.key = 
+ssl.remote.crt = 
+ssl.remote.key = 
