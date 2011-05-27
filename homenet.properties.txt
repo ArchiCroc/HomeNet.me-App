@@ -1,5 +1,5 @@
 # settings
-settings.apikey = test1234
+settings.apikey = test12345
 settings.port = 2443
 settings.server = homenet.me
 

@@ -95,11 +95,11 @@ public class Packet implements Cloneable {
     byte[] data = new byte[66];
     Date received;
 
-    Packet() {
+    public Packet() {
         received = new Date();
     }
 
-    Packet(byte[] packet) {
+    public Packet(byte[] packet) {
         received = new Date();
         data = packet;
     }

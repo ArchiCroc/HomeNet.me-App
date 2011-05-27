@@ -10,14 +10,14 @@ package homenet;
  */
 public abstract class Port {
 
-    protected homenet.Stack _homeNet;
+    protected Stack _homeNet;
     protected String _id;
     protected boolean _sending;// = false;
     protected boolean _receiving;// = false;
     boolean started;
     long timeAdded;
 
-    Port(homenet.Stack homeNet) {
+    Port(Stack homeNet) {
         _homeNet = homeNet;
         timeAdded = System.currentTimeMillis(); //might need to offset or use java datetime
         started = false;

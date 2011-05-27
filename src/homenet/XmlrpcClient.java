@@ -36,10 +36,13 @@ public class XmlrpcClient {
     XmlRpcClient client;
     XmlRpcClientConfigImpl config;
 
-    public XmlrpcClient(String address) throws MalformedURLException {
+    public XmlrpcClient(String address, String key) throws MalformedURLException {
             config = new XmlRpcClientConfigImpl();
-            config.setServerURL(new URL("http://"+address+"/xmlrpc.php"));
+            //XmlrpcClient("http://homenet.me/xmlrpc.php?apikey="+homenetApikey);
+            System.out.println("Start client for"+"http://"+address+"/xmlrpc.php?apikey="+key);
+            config.setServerURL(new URL("http://"+address+"/xmlrpc.php?apikey="+key));
             client = new XmlRpcClient();
+            client.setConfig(config);
     }
 
     /**

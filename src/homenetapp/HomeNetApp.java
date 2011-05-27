@@ -29,7 +29,7 @@ public class HomeNetApp {
     public HashMap<Integer, String[]> commands;
     public PropertiesConfiguration config;
     
-    private homenet.Stack _homenet;
+    public homenet.Stack homenet;
     private SerialManager _serialmanager;
     
     private XmlrpcClient _xmlrpcClient;
@@ -39,31 +39,48 @@ public class HomeNetApp {
     // public HashMap Por;
 
     public HomeNetApp() {
-        
-        loadCommands();
         loadConfig();
         
+    }
+    
+    public void start(){
+        loadCommands();
         
         
-        _homenet = new homenet.Stack(0xff);
         
-        _homenet.init();
+        
+        homenet = new homenet.Stack(0xff);
+        
+        homenet.init();
         
         HashMap<String,Port> ports = new HashMap<String,Port>();
         HashMap<Integer,Device> devices = new HashMap<Integer,Device>();
         
+     
+        
        boolean loadXmlrpc = true;
         
         try {
-            _xmlrpcClient = new XmlrpcClient("homenet.me");
+            _xmlrpcClient = new XmlrpcClient("homenet.me","fail");
             _xmlrpcServer = new XmlrpcServer(2443);
+            XmlrpcCalls calls = new XmlrpcCalls(this);
+        _xmlrpcServer.add("homenet", calls);
         } catch(Exception e){
             System.out.println(e.getMessage());
             loadXmlrpc = false;
-        }    
+        } 
         
-        _serialmanager = new SerialManager(_homenet);
+        
+        if(loadXmlrpc == true){
+            homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
+        }
+        
+        
+        
+        
+        _serialmanager = new SerialManager(homenet);
     }
+    
     
     private boolean loadConfig() {
         try {
@@ -91,8 +108,7 @@ public class HomeNetApp {
             String[] r = splitTokens(strings[i], "\t");
             commands.put(Integer.parseInt(r[0], 16), r);
         }
-        System.out.println("Size: "+commands.size());
-        System.out.println("Length: "+strings.length);
+       
     }
         
     class compareCommands implements Comparator {
@@ -107,23 +123,23 @@ public class HomeNetApp {
         //System.out.println(commands.keySet().size());
        // System.out.println("Size: "+commands.size());
         
-       // Object[] rows = commands.keySet().toArray();
-      //  Arrays.sort(rows, new compareCommands());
-      //  System.out.println("Length: "+rows.length);
+        Object[] rows = commands.keySet().toArray();
+        Arrays.sort(rows, new compareCommands());
+        System.out.println("Length: "+rows.length);
         
         
        //Object[] rows = new Object[1]; 
-       Integer[] test =  {new Integer(2),new Integer(2),new Integer(2),new Integer(2)};
+      // Integer[] test =  {new Integer(2),new Integer(2),new Integer(2),new Integer(2)};
        
        // System.exit(-1);
-        return test;
+        return rows;
 
     }
 
     public String getAppPath(String filename) {
         //@todo find the right path
         String path = HomeNetApp.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        System.out.println(path + filename);
+        //System.out.println(path + filename);
         return path + filename;
         //return "C:\\Users\\mdoll\\Documents\\NetBeansProjects\\HomeNet.me-App\\" + filename;
        // return "C:\\Projects (Safe)\\HomeNet.me-App\\" + filename;

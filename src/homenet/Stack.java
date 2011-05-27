@@ -42,6 +42,10 @@ public class Stack {
     public HashMap getPorts() {
         return _ports;
     }
+    
+    public Port getPort(String port) {
+        return _ports.get(port);
+    }    
 
     private int _getId() {
         if (_uniqueId == 255) {

@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package homenet;
 
 import java.util.*;
@@ -12,36 +8,28 @@ import java.text.SimpleDateFormat;
  * @author mdoll
  */
 //http://www.dynamicobjects.com/d2r/archives/003057.html
+public class PortXmlrpc extends Port {
 
+    XmlrpcClient _client;
+    int _node;
 
-    class PortXmlrpc extends Port {
-
-        XmlrpcClient _client;
-        int _node;
-
-        PortXmlrpc(Stack homeNet, XmlrpcClient c, int n) {
-            super(homeNet);
-            _client = c;
-            _node = n;
-
-
-        }
-
-    PortXmlrpc(Stack homeNet , XmlrpcClient c) {
+    public PortXmlrpc(Stack homeNet, XmlrpcClient c, int n) {
         super(homeNet);
-            _client = c;
-            _node = 0;
-
-
+        _client = c;
+        _node = n;
     }
 
+    public PortXmlrpc(Stack homeNet, XmlrpcClient c) {
+        super(homeNet);
+        _client = c;
+        _node = 0;
+    }
 
     @Override
     public void init(String id) {
-            _id = id;
-            started = true;
+        _id = id;
+        started = true;
     }
-
 
     @Override
     public void send(Packet packet) {
@@ -102,8 +90,6 @@ import java.text.SimpleDateFormat;
     @Override
     public void receive() {
     }
-    
-    
     public static SimpleDateFormat ISO8601FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
     public static SimpleDateFormat RFC822DATEFORMAT = new SimpleDateFormat("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", Locale.US);
     public static SimpleDateFormat msgDateTimeFormat = new SimpleDateFormat("HH:mm:ss", Locale.US);
@@ -123,9 +109,9 @@ import java.text.SimpleDateFormat;
         result = result.substring(0, result.length() - 2)
                 + ":" + result.substring(result.length() - 2);
         return result;
-    
 
 
 
-}
+
+    }
 }

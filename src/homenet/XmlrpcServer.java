@@ -36,7 +36,7 @@ import org.apache.xmlrpc.common.*;
 import org.apache.xmlrpc.webserver.*;
 
 
-
+import java.util.*;
 
 
 public class XmlrpcServer {
@@ -66,10 +66,46 @@ public class XmlrpcServer {
 //              mapping.setAuthenticationHandler(handler);
 //              return mapping;
               mapping = new PropertyHandlerMapping();
+
+      mapping.setRequestProcessorFactoryFactory(new myRequestProcessorFactoryFactory());
+      mapping.setVoidMethodEnabled(true);
+      //phm.addHandler(EchoService.class.getName(), EchoService.class);
+     // xmlRpcServer.setHandlerMapping(phm);
+
+      //XmlRpcServerConfigImpl serverConfig = (XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
+     // serverConfig.setEnabledForExtensions(true);
+     // serverConfig.setContentLengthOptional(false);
+              
+              
               
               return mapping;
           }
   }
+    public class myRequestProcessorFactoryFactory implements RequestProcessorFactoryFactory {
+
+        private final RequestProcessorFactory factory = new myRequestProcessorFactory();
+        private  HashMap<java.lang.Class,Object> classes = new HashMap();
+
+        public myRequestProcessorFactoryFactory() {
+            
+        }
+        
+        public void addObject(Object object){
+            this.classes.put(object.getClass(), object);
+        }
+
+        public RequestProcessorFactory getRequestProcessorFactory(Class aClass) throws XmlRpcException {
+            return factory;
+        }
+
+        private class myRequestProcessorFactory implements RequestProcessorFactory {
+
+            public Object getRequestProcessor(XmlRpcRequest xmlRpcRequest) throws XmlRpcException {
+              //  xmlRpcRequest.getClass();   
+                return classes.get(xmlRpcRequest.getClass());
+            }
+        }
+    }
     
 
     public XmlrpcServer(int port) throws IOException, ServletException {
@@ -93,18 +129,19 @@ public class XmlrpcServer {
 //            serverConfig.setEnabledForExtensions(true);
 //           serverConfig.setContentLengthOptional(false);
 
-        server.start();
-
+       // server.start();
+        System.out.print("Starting XMLRPC Server");
 
     }
 
     /**
      * Add an object to the server.
      */
-    public void add(String name, Class object) {
+    public void add(String name, Object object) {
         try {
-            mapping.addHandler(name, object);
-            server.start();
+            ((myRequestProcessorFactoryFactory)mapping.getRequestProcessorFactoryFactory()).addObject(object);
+            mapping.addHandler(name, object.getClass());
+          //  server.start();
         } catch (Exception exception) {
             System.err.println("JavaServer: " + exception.toString());
         }

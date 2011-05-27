@@ -13,7 +13,19 @@ import java.util.*;
 //import java.awt.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
+import java.io.*;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import java.net.*;
+import java.security.KeyStore;
+import javax.net.ssl.*;
+//import java.security.*;
+import java.security.cert.*;
+import org.apache.commons.codec.binary.Base64;
+
+import homenet.XmlrpcClient;
 /**
  *
  * @author mdoll
@@ -23,8 +35,32 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     /** Creates new form HomeNetAppGui */
     public HomeNetAppGui() {
         
+         homenetapp = new HomeNetApp();
+        
+        //if not configured
+        if(true){
+            System.out.println("HomeNet App Not Setup");
+            System.out.println("Launching Setup Wizard");
+            JFrame setupFrame = new SetupWizardGui();
+            setupFrame.addWindowListener(new setupFrameEventHandler());
+            setupFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            setupFrame.setVisible(true);
+        } else {
+            startHomeNetApp();
+        }
+        
+        
+        //redirect console to gui
+        //redirectSystemStreams();
+        
+        
+
+    }
+    
+    private void startHomeNetApp(){
+        
         try {
-        homenetapp = new HomeNetApp();
+            homenetapp.start();
         } catch (Exception e){
             //show popup and exit program
             System.err.println(e.getMessage());
@@ -45,10 +81,21 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         loadSettings();
         
         SetupMenuSerialPorts();
-        AboutDialog.setLocationRelativeTo(null);
         SendPacketFrame.setLocationRelativeTo(null);
-
     }
+    
+            class setupFrameEventHandler extends WindowAdapter {
+  public void windowClosing(WindowEvent evt) {
+    //check to make sure all the settings are good
+      System.out.println("Checking New Config");
+      //then reboot the app
+      System.out.println("rebooting app with new config");
+      SwingUtilities.invokeLater(new Runnable() {  
+        public void run() {  
+      startHomeNetApp();
+        }});
+  }
+}
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -59,8 +106,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        AboutDialog = new javax.swing.JDialog();
-        jOptionPane1 = new javax.swing.JOptionPane();
         SendPacketFrame = new javax.swing.JFrame();
         sendPacketButton = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
@@ -82,17 +127,27 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         jPanel4 = new javax.swing.JPanel();
         serverLabel = new javax.swing.JLabel();
         apiKeyLabel = new javax.swing.JLabel();
-        portLabel = new javax.swing.JLabel();
         serverTextField = new javax.swing.JTextField();
         apiKeyTextField = new javax.swing.JTextField();
-        portTextField = new javax.swing.JTextField();
+        testButton = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        certPropertiesLabel = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
+        portLabel = new javax.swing.JLabel();
+        portTextField = new javax.swing.JTextField();
+        jCheckBox2 = new javax.swing.JCheckBox();
+        jCheckBox1 = new javax.swing.JCheckBox();
+        jSeparator1 = new javax.swing.JSeparator();
+        jPanel6 = new javax.swing.JPanel();
         settingsSaveButton = new javax.swing.JButton();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
         jSplitPane2 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lastPacketTextArea = new javax.swing.JTextArea();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTextPane1 = new javax.swing.JTextPane();
+        consoleTextPane = new javax.swing.JTextPane();
         jPanel3 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
@@ -106,28 +161,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         menuHelp = new javax.swing.JMenu();
         menuHelpOnline = new javax.swing.JMenuItem();
         menuHelpAbout = new javax.swing.JMenuItem();
-
-        AboutDialog.setBounds(new java.awt.Rectangle(0, 0, 300, 200));
-        AboutDialog.setMinimumSize(new java.awt.Dimension(300, 200));
-
-        jOptionPane1.setMessageType(1);
-
-        javax.swing.GroupLayout AboutDialogLayout = new javax.swing.GroupLayout(AboutDialog.getContentPane());
-        AboutDialog.getContentPane().setLayout(AboutDialogLayout);
-        AboutDialogLayout.setHorizontalGroup(
-            AboutDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(AboutDialogLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jOptionPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(28, Short.MAX_VALUE))
-        );
-        AboutDialogLayout.setVerticalGroup(
-            AboutDialogLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(AboutDialogLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jOptionPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
 
         SendPacketFrame.setTitle("Send Packet");
         SendPacketFrame.setMinimumSize(new java.awt.Dimension(380, 240));
@@ -249,14 +282,21 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         apiKeyLabel.setText("API Key:");
 
-        portLabel.setText("Port:");
-
+        serverTextField.setEditable(false);
         serverTextField.setText("homenet.me");
 
         apiKeyTextField.setText("reallylongstringofchars");
 
-        portTextField.setEditable(false);
-        portTextField.setText("2443");
+        testButton.setText("Test");
+        testButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                testButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("SSL Cert:");
+
+        certPropertiesLabel.setText("Signed By");
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -264,15 +304,19 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(portLabel)
-                    .addComponent(apiKeyLabel)
-                    .addComponent(serverLabel))
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(apiKeyLabel)
+                        .addComponent(serverLabel))
+                    .addComponent(jLabel1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(apiKeyTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
-                    .addComponent(serverTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
-                    .addComponent(portTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                        .addComponent(certPropertiesLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 224, Short.MAX_VALUE)
+                        .addComponent(testButton))
+                    .addComponent(apiKeyTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
+                    .addComponent(serverTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -288,25 +332,79 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                     .addComponent(apiKeyLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(portTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(portLabel))
-                .addContainerGap(59, Short.MAX_VALUE))
+                    .addComponent(testButton)
+                    .addComponent(jLabel1)
+                    .addComponent(certPropertiesLabel))
+                .addContainerGap(56, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("HomeNet.me", jPanel4);
+        jTabbedPane1.addTab("Server", jPanel4);
+
+        portLabel.setText("Port:");
+
+        portTextField.setEditable(false);
+        portTextField.setText("2443");
+
+        jCheckBox2.setText("Enable UPnP Portforwarding");
+
+        jCheckBox1.setSelected(true);
+        jCheckBox1.setText("Enable Incoming Packets");
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 395, Short.MAX_VALUE)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jCheckBox1)
+                .addContainerGap(246, Short.MAX_VALUE))
+            .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(portLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(portTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(314, Short.MAX_VALUE))
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jCheckBox2)
+                .addContainerGap(228, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addComponent(jCheckBox1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(portLabel)
+                    .addComponent(portTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jCheckBox2)
+                .addContainerGap(40, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Client", jPanel5);
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 395, Short.MAX_VALUE)
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 142, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Other", jPanel5);
+        jTabbedPane1.addTab("SSL", jPanel6);
 
         settingsSaveButton.setText("Save");
         settingsSaveButton.addActionListener(new java.awt.event.ActionListener() {
@@ -334,6 +432,8 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        jTabbedPane1.getAccessibleContext().setAccessibleName("Server");
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("HomeNet.me Desktop App");
 
@@ -342,26 +442,38 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         jLabel9.setText("Last Packet Received:");
 
+        lastPacketTextArea.setColumns(20);
+        lastPacketTextArea.setRows(5);
+        jScrollPane2.setViewportView(lastPacketTextArea);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel9)
-                .addContainerGap(341, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE)
+                    .addComponent(jLabel9))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel9)
-                .addContainerGap(174, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         jSplitPane2.setLeftComponent(jPanel2);
 
-        jScrollPane1.setViewportView(jTextPane1);
+        consoleTextPane.setBackground(new java.awt.Color(0, 0, 0));
+        consoleTextPane.setEditable(false);
+        consoleTextPane.setFont(new java.awt.Font("Consolas", 0, 10));
+        consoleTextPane.setForeground(new java.awt.Color(255, 255, 255));
+        jScrollPane1.setViewportView(consoleTextPane);
 
         jSplitPane2.setRightComponent(jScrollPane1);
 
@@ -486,7 +598,11 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     private void menuHelpAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuHelpAboutActionPerformed
       // new jDialog1();
-        AboutDialog.setVisible(true);
+       // AboutDialog.setVisible(true);
+        
+        JOptionPane.showMessageDialog(null, "<html>Developed by Matthew Doll<br>Licenced Under GPLv3<br>For more info visit HomeNet.me</html>", "About", JOptionPane.INFORMATION_MESSAGE); 
+        
+        
     }//GEN-LAST:event_menuHelpAboutActionPerformed
 
     private void menuToolsSendPacketActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuToolsSendPacketActionPerformed
@@ -545,7 +661,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         public java.awt.Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-Integer item = (Integer) value;
+            Integer item = (Integer) value;
             if (value != null) {
                // Integer item = (Integer) value;
                 setText(homenetapp.commands.get(item)[1]);
@@ -635,6 +751,98 @@ Integer item = (Integer) value;
         SettingsDialog.setVisible(false);
     }//GEN-LAST:event_settingsSaveButtonActionPerformed
 
+    private void testButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testButtonActionPerformed
+        SwingUtilities.invokeLater(new Runnable() {  
+        public void run() {  
+        try {
+//        URL url = new URL("https://mail.google.com/");
+//        HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+//        conn.connect();
+//        Certificate[] certs = conn.getServerCertificates();
+//        
+//       
+//         System.out.println("Cert Chain Length: "+certs.length);
+//         
+//        Certificate c = certs[0];
+//        X509Certificate xc = (X509Certificate) c;
+//        
+//        String[] from = homenetapp.splitTokens(xc.getIssuerX500Principal().getName(),"=, ");
+//        String[] to = homenetapp.splitTokens(xc.getSubjectX500Principal().getName(),"=, ");
+//        
+//        certPropertiesLabel.setText("<html>Issued by: "+from[1]+"<br>For: "+to[1]+"<br>Expires: "+xc.getNotAfter()+"</html>");
+//        
+//        
+//             System.out.println("Cert: "+c.getType());
+//             
+//             System.out.println("Not After: "+xc.getNotAfter());
+//             System.out.println("Subject DN: "+xc.getSubjectX500Principal());
+//             System.out.println("Issuer DN: "+xc.getIssuerX500Principal());
+//             System.out.println("getSigAlgName: "+xc.getSigAlgName());
+             
+             XmlrpcClient xmlrpcClient = new XmlrpcClient("homenet.me",apiKeyTextField.getText());
+              String reply = (String)xmlrpcClient.execute("HomeNet.validateApikey", apiKeyTextField.getText());
+              
+              if(!reply.equals("true")){
+                 JOptionPane.showMessageDialog(null, reply, "Error", JOptionPane.ERROR_MESSAGE); 
+                 return;
+              }
+              
+             
+             
+             
+             
+             
+ 
+//             KeyStore mykeystore = KeyStore.getInstance("JKS");
+//
+//            java.security.KeyFactory rSAKeyFactory = java.security.KeyFactory.getInstance("RSA");
+//            
+//            java.security.PublicKey pk = xc.getPublicKey();;
+//            
+//            java.security.spec.PKCS8EncodedKeySpec keySpec = new
+//            java.security.spec.PKCS8EncodedKeySpec(pk.getEncoded());
+//            java.security.KeyFactory keyFactory = null;
+//            keyFactory = keyFactory.getInstance("RSA");
+//            java.security.PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+//                    
+////            mykeystore.setEntry("HomeNet",        
+////                    new KeyStore.PrivateKeyEntry(privateKey, certs),
+////                    new KeyStore.PasswordProtection("keypassword".toCharArray()));
+//
+//             FileOutputStream sigfos = new FileOutputStream("test2.txt");
+//
+//             
+//             mykeystore.setKeyEntry("HomeNet", privateKey.getEncoded(), certs);
+//             mykeystore.store(sigfos, "mysecret".toCharArray());
+//             sigfos.close();
+             
+         
+         
+        //if(URLConnection.class.getName() == )
+        //conn.
+        } catch(Exception e){
+            
+             certPropertiesLabel.setText("Invalid Server");
+           // System.out.println(e.getMessage());
+        e.printStackTrace();
+        }
+        
+        }
+        });
+//
+//// Sending information through HTTPS: POST
+//OutputStream ostream = conn.getOutputStream();
+//ostream.write(....);
+//......
+//ostream.close();
+//        
+        
+    }//GEN-LAST:event_testButtonActionPerformed
+
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        // TODO add your handling code here:
+}//GEN-LAST:event_jCheckBox1ActionPerformed
+
     class NodeVerifier extends javax.swing.InputVerifier {
          public boolean verify(javax.swing.JComponent input) {
  	       javax.swing.JTextField tf = (javax.swing.JTextField) input;
@@ -647,11 +855,55 @@ Integer item = (Integer) value;
          }
      }
     
+        private void updateTextPane(final String text) {  
+      SwingUtilities.invokeLater(new Runnable() {  
+        public void run() {  
+          javax.swing.text.Document doc = consoleTextPane.getDocument();  
+          try {  
+            doc.insertString(doc.getLength(), text, null);  
+          } catch (javax.swing.text.BadLocationException e) {  
+            throw new RuntimeException(e);  
+          }  
+          consoleTextPane.setCaretPosition(doc.getLength() - 1);  
+        }  
+      });  
+    }  
+      
+    private void redirectSystemStreams() {  
+      OutputStream out = new OutputStream() {  
+        @Override  
+        public void write(final int b) throws IOException {  
+          updateTextPane(String.valueOf((char) b));  
+        }  
+      
+        @Override  
+        public void write(byte[] b, int off, int len) throws IOException {  
+          updateTextPane(new String(b, off, len));  
+        }  
+      
+        @Override  
+        public void write(byte[] b) throws IOException {  
+          write(b, 0, b.length);  
+        }  
+      };  
+      
+      System.setOut(new PrintStream(out, true));  
+      System.setErr(new PrintStream(out, true));  
+    }  
+    
+    
+    
+    
+    
+    
+    
+    
     
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
@@ -662,33 +914,40 @@ Integer item = (Integer) value;
     }
         
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JDialog AboutDialog;
     private javax.swing.JFrame SendPacketFrame;
     private javax.swing.JDialog SettingsDialog;
     private javax.swing.JLabel apiKeyLabel;
     private javax.swing.JTextField apiKeyTextField;
+    private javax.swing.JLabel certPropertiesLabel;
     private javax.swing.JComboBox commandComboBox;
     private javax.swing.JLabel commandLabel;
+    private javax.swing.JTextPane consoleTextPane;
+    private javax.swing.Box.Filler filler1;
     private javax.swing.JLabel fromDeviceSpinner;
     private javax.swing.JLabel fromNodeLabel;
     private javax.swing.JSpinner fromNodeSpinner;
+    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBox jCheckBox2;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem3;
-    private javax.swing.JOptionPane jOptionPane1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSpinner jSpinner4;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTextPane jTextPane1;
+    private javax.swing.JTextArea lastPacketTextArea;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuHelp;
     private javax.swing.JMenuItem menuHelpAbout;
@@ -705,6 +964,7 @@ Integer item = (Integer) value;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JTextField serverTextField;
     private javax.swing.JButton settingsSaveButton;
+    private javax.swing.JButton testButton;
     private javax.swing.JLabel toDeviceLabel;
     private javax.swing.JSpinner toDeviceSpinner;
     private javax.swing.JLabel toNodeLabel;
