@@ -25,9 +25,9 @@ public class Serial {
     SerialPort serialPort;
     InputStream input;
     OutputStream output;
-    byte buffer[] = new byte[1024];
-    int bufferIndex = 0;
-    int bufferLast = 0;
+   // byte buffer[] = new byte[1024];
+   // int bufferIndex = 0;
+  //  int bufferLast = 0;
 
     public Serial(String port) {
         super();
@@ -35,6 +35,9 @@ public class Serial {
     }
 
     public boolean begin(int speed) {
+        
+        System.out.println("Beginning Serial Port "+port+" @ "+speed);
+        
          try {
             CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(this.port);
             if (portIdentifier.isCurrentlyOwned()) {
@@ -48,6 +51,7 @@ public class Serial {
                     serialPort.setSerialPortParams(speed, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
 
                     input = serialPort.getInputStream();
+                    System.out.println("InputStream type: "+input.getClass().getName());
                     output = serialPort.getOutputStream();
                 } else {
                     throw new Exception("Only Supports Serial Ports");
@@ -98,28 +102,35 @@ public class Serial {
     }
 
     public void flush() {
-        bufferIndex = 0;
-        bufferLast = 0;
+        try {
+            input.skip(input.available()); 
+        } catch (IOException e){ }
     }
 
-    public int read() {
-        if (bufferIndex == bufferLast) {
+    public int read() throws Exception {
+      //  System.out.println("Serial: Reading Data");
+      //  byte[] buffer = new byte[1]; 
+        try{
+       //     if( (input.read(buffer,0,1)) > -1){
+                
+                return input.read();
+          //      return buffer[0];
+         //   } 
+        } catch (IOException e){
             return -1;
         }
-
-        synchronized (buffer) {
-            int outgoing = buffer[bufferIndex++] & 0xff;
-            if (bufferIndex == bufferLast) {  // rewind
-                bufferIndex = 0;
-                bufferLast = 0;
-            }
-            return outgoing;
-        }
-
+        
+      //  return -1;
     }
 
     public int available() {
-        return (bufferLast - bufferIndex);
+        try {
+            return input.available();
+        } catch (Exception e){
+            return -1;
+        }
+        
+      //  return (bufferLast - bufferIndex);
     }
 
     public void print() {
@@ -128,28 +139,23 @@ public class Serial {
     /**
      * This will handle both ints, bytes and chars transparently.
      */
-    public void write(int what) {  // will also cover char
-        try {
+    public void write(int what) throws Exception {  // will also cover char
+      //  System.out.println("Serial: Writing Data");
+        if(output == null){
+            throw new Exception("Output stream not Setup");
+        }
+        
             output.write(what & 0xff);  // for good measure do the &
             output.flush();   // hmm, not sure if a good idea
-
-        } catch (Exception e) { // null pointer or serial port dead
-            System.err.println(e.getMessage());
-        }
     }
 
-    public void write(byte bytes[]) {
-        try {
+    public void write(byte bytes[]) throws Exception {
             output.write(bytes);
             output.flush();   // hmm, not sure if a good idea
-
-        } catch (Exception e) { // null pointer or serial port dead
-            //errorMessage("write", e);
-            e.printStackTrace();
-        }
     }
 
-    public static ArrayList listPorts() {
+    public static synchronized  ArrayList listPorts() {
+        //System.out.println("Generating Serial Port List");
         ArrayList ports = new ArrayList<String>();
 
         java.util.Enumeration<CommPortIdentifier> portEnum = CommPortIdentifier.getPortIdentifiers();
@@ -157,7 +163,7 @@ public class Serial {
             CommPortIdentifier portIdentifier = portEnum.nextElement();
             if (portIdentifier.getPortType() == CommPortIdentifier.PORT_SERIAL) {
                 ports.add(portIdentifier.getName());
-                //System.out.println(portIdentifier.getName()  +  " - " +  getPortTypeName(portIdentifier.getPortType()) );
+              //  System.out.println(portIdentifier.getName()  +  " - " +  getPortTypeName(portIdentifier.getPortType()) );
             }
         }
 

@@ -1,13 +1,19 @@
 # settings
-settings.apikey = test12345
-settings.port = 2443
-settings.server = homenet.me
+config.done = true
 
-# ports
-ports.serial = COM1,COM2
 
-# sslcert
-ssl.local.crt = 
-ssl.local.key = 
-ssl.remote.crt = 
-ssl.remote.key = 
+client.server = homenet.me
+client.apikey = 5e6e55b3d965d47def3b18f5cc95b2414a37ee5a
+
+server.enabled = true
+server.port = 2443
+server.upnp = false
+ports.serial = COM3
+
+packet.type = 0
+packet.tonode = 1
+packet.todevice = 0
+packet.fromnode = 3
+packet.fromdevice = 1
+packet.command = 8
+packet.payload = testsdgsdfssf

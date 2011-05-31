@@ -10,7 +10,7 @@ import java.util.*;
  *
  * @author mdoll
  */
-class PortSerial extends Port {
+public class PortSerial extends Port {
     
     final static int SERIAL_SPEED = 115200;
 
@@ -24,13 +24,16 @@ class PortSerial extends Port {
     private long _sendingTimer;
 //
 
-    PortSerial(Stack homeNet, Serial s) {
+    public PortSerial(Stack homeNet, Serial s) {
         super(homeNet);
         _serial = s;
     }
 
     @Override
     public void init(String id) {
+        
+        System.out.println("Init Port: "+id);
+        
         _sending = false;
         _receiving = false;
         _id = id;
@@ -55,12 +58,12 @@ class PortSerial extends Port {
             try {
                 _serial.write(packet.data[i]);
             } catch (Exception e) {
-                System.out.print("Exception Caught: " + e);
+                e.printStackTrace();
                 stop();
                 _homeNet.removePort(getId());
+                packet.setStatus(STATUS_FAILED);
                 return;
             }
-
         }
         System.out.println("");
         packet.setStatus(STATUS_SENT);
@@ -71,16 +74,29 @@ class PortSerial extends Port {
         _serial.end();
         System.out.println("stopping port");
     }
+    
+    private void write(int data) {
+        try {
+            _serial.write(data);
+        } catch (Exception e) {
+            System.out.print("Exception Caught: " + e);
+            stop();
+            _homeNet.removePort(getId());
+            return;
+        }
+    }
 
     @Override
     public void receive() {
 
         while (_serial.available() > 0) {
+           // System.out.println("Receiving: "+_serial.available());
             int byteIn;
             try {
                 byteIn = _serial.read();
             } catch (Exception e) {
                 System.out.println("caught exception 2");
+                e.printStackTrace();
                 stop();
                 _homeNet.removePort(getId());
                 return;
@@ -106,9 +122,9 @@ class PortSerial extends Port {
 
                 if ((byteIn < 10) || (byteIn > 66)) { //bad byte, send 0 to start over
                     _serial.flush();
-                    //   try { 
-                    _serial.write(0);
-                    //} catch (Exception e){ }
+                    
+                    write(0);
+                   
                     return;
                 }
 
@@ -120,7 +136,7 @@ class PortSerial extends Port {
                 _receivingPacket.setFromPort(_id);
                 _receivingPacket.received = new Date();
                 _receivingPacket.setLength(byteIn);
-                _receivingPacket.setStatus(STATUS_RECEVING);
+                _receivingPacket.setStatus(STATUS_RECEIVING);
                 _receivingChecksum = 0;
             }
             System.out.print(byteIn + ",");
@@ -135,7 +151,7 @@ class PortSerial extends Port {
             _receiving = false;
 
             //Serial.flush();
-            _serial.write(0); //tell the node to resend last
+            write(0); //tell the node to resend last
         }
         //since this loops every cycle
         //might be better to move this to it's own function so it clearer
@@ -175,13 +191,13 @@ class PortSerial extends Port {
                 //packet failed crc check
                 _receivingPacket.setStatus(STATUS_CLEAR);
                 _serial.flush();
-                _serial.write(0); //tell the node to resend last
+                write(0); //tell the node to resend last
                 System.out.println("Receive failed Checksum " + _receivingChecksum + " " + checksum);
             } else {
 
                 _receivingPacket.setStatus(STATUS_RECEIVED);
                 //Serial.flush();
-                _serial.write(255); //tell the node the packet was successful
+                write(255); //tell the node the packet was successful
                 System.out.println("Receive Passed Checksum " + _receivingChecksum + " " + checksum);
             }
             //reset incomingPacket

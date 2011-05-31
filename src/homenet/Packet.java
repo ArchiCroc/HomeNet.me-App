@@ -60,7 +60,7 @@ public class Packet implements Cloneable {
     final static int CMD_MULTIPACKET = 0xA0;
 //an enum might be better here
     final static int STATUS_CLEAR = 0;
-    final static int STATUS_RECEVING = 1;
+    final static int STATUS_RECEIVING = 1;
     final static int STATUS_RECEIVED = 2;
     final static int STATUS_WAITING = 3;
     final static int STATUS_READY = 4;
@@ -87,13 +87,13 @@ public class Packet implements Cloneable {
     
     
     
-    
+    //These Should not be public but I need to rewrite some of the stack
 
-    String toPort = null;
-    String fromPort = null;
-    int status;
-    byte[] data = new byte[66];
-    Date received;
+    public String toPort = null;
+    public String fromPort = "self";
+    public int status;
+    public byte[] data = new byte[66];
+    public Date received;
 
     public Packet() {
         received = new Date();
@@ -135,19 +135,19 @@ public class Packet implements Cloneable {
     }
 
     public int getFromNode() {
-        return (int) (data[PACKET_FROM] << 4) | (int) (data[PACKET_FROM + 1] >> 4);
+        return (((int) data[PACKET_FROM]) << 4) | (int) (data[PACKET_FROM + 1] >> 4);
     }
 
     public int getFromDevice() {
-        return (int) (data[PACKET_FROM + 1] & 0x0F);
+        return data[PACKET_FROM + 1] & 0x0F;
     }
 
     public int getToNode() {
-        return (int) (data[PACKET_TO] << 4) | (int) (data[PACKET_TO + 1] >> 4);
+        return  (((int) data[PACKET_TO] & 0xff) << 4) | ((data[PACKET_TO + 1] & 0xff) >> 4);
     }
 
     public int getToDevice() {
-        return (int) (data[PACKET_TO + 1] & 0x0F);
+        return data[PACKET_TO + 1] & 0x0F;
     }
 
     public int getId() {

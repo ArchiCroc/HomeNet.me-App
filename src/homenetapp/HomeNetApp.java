@@ -30,7 +30,7 @@ public class HomeNetApp {
     public PropertiesConfiguration config;
     
     public homenet.Stack homenet;
-    private SerialManager _serialmanager;
+    public SerialManager serialmanager;
     
     private XmlrpcClient _xmlrpcClient;
     private XmlrpcServer _xmlrpcServer;
@@ -40,45 +40,44 @@ public class HomeNetApp {
 
     public HomeNetApp() {
         loadConfig();
-        
+        loadCommands();
     }
     
     public void start(){
-        loadCommands();
-        
-        
-        
         
         homenet = new homenet.Stack(0xff);
-        
         homenet.init();
         
-        HashMap<String,Port> ports = new HashMap<String,Port>();
-        HashMap<Integer,Device> devices = new HashMap<Integer,Device>();
+       // HashMap<String,Port> ports = new HashMap<String,Port>();
+      //  HashMap<Integer,Device> devices = new HashMap<Integer,Device>();
+ 
         
-     
         
-       boolean loadXmlrpc = true;
+       serialmanager = new SerialManager(homenet);
+        
+        
+        
+        
+        boolean loadXmlrpc = true;
         
         try {
             _xmlrpcClient = new XmlrpcClient("homenet.me","fail");
             _xmlrpcServer = new XmlrpcServer(2443);
             XmlrpcCalls calls = new XmlrpcCalls(this);
-        _xmlrpcServer.add("homenet", calls);
+            _xmlrpcServer.add("homenet", calls);
         } catch(Exception e){
             System.out.println(e.getMessage());
             loadXmlrpc = false;
         } 
         
-        
         if(loadXmlrpc == true){
-            homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
+         //   homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
         }
         
         
         
         
-        _serialmanager = new SerialManager(homenet);
+        
     }
     
     
@@ -92,8 +91,13 @@ public class HomeNetApp {
     }
 
     public void saveConfig() {
+        
+        
+        
+        
         try{
             config.save();
+            System.out.println("Configed saved");
         } catch(Exception e){
             System.out.println("Can't save config");
         }
@@ -146,6 +150,7 @@ public class HomeNetApp {
     }
     
     public void exit(){
+        serialmanager.exit();
         saveConfig();
     }
 
@@ -155,58 +160,116 @@ public class HomeNetApp {
 
     class SerialManager {
 
-        public ArrayList portList = new ArrayList();
+        public ArrayList<String> portList = new ArrayList();
+        public ArrayList<String> selectedPorts = new ArrayList();
         private SerialCheckThread sThread;
         private homenet.Stack _homeNet;
+        
+        ArrayList<SerialListener> _listeners = new ArrayList();
 
         public SerialManager(homenet.Stack stack) {
             
             _homeNet = stack;
             
-            //loadSerialPorts();
-            checkSerialPorts();
-            
 
+        }
+        public void start(){
+                        //loadSerialPorts();
+           checkSerialPorts();
+
+           List<String> list = config.getList("ports.serial");
+            for(String s : list){
+                serialmanager.activatePort(s);
+            }
+           
+           
             sThread = new SerialCheckThread(1000);
             sThread.setPriority(3);
             sThread.start();
-
+        }
+        
+        public void exit(){
+                config.setProperty("ports.serial", selectedPorts);
+            }
+        
+        public void addListener(SerialListener l){
+            _listeners.add(l);
+        }
+        
+        public boolean activatePort(String port){
+            System.out.println("Activate Port: "+port);
+            if(!portList.contains(port)){
+                return false;
+            }
+                        
+            
+            try{
+                _homeNet.addPort(port, new PortSerial(_homeNet, new Serial(port)));
+            } catch(Exception e) {
+                System.out.println(e.getMessage());
+                return false;
+            }
+            
+            selectedPorts.add(port);
+            
+            for(SerialListener l : _listeners){
+                l.portActivated(port);
+             }
+            return true;
+        }
+        
+        public void deactivatePort(String port){
+            System.out.println("Deactivate Port: "+port);
+          //  if (currentPorts.containsKey(port)) {
+                    _homeNet.removePort(port);
+           //     }
+                    
+             selectedPorts.remove(port);       
+                    
+            for(SerialListener l : _listeners){
+                l.portDeactivated(port);
+             }
         }
 
         public void checkSerialPorts() {
-
-            ArrayList currentList = Serial.listPorts();
+            
+           // System.out.println("HomeNetApp.checkSerialPorts");
+            ArrayList<String> currentList = Serial.listPorts();
             HashMap currentPorts = _homeNet.getPorts();
 
             //check for new ports
-            Iterator i = currentList.iterator();
-            while (i.hasNext()) {
-                String k = (String) i.next();
-
-                if (portList.contains(k)) {
+            for(String k : currentList){
+                if (!portList.contains(k)) {
                     portList.add(k);
+                    System.out.println("New port found: " + k);
+                System.out.println("List size: " + _listeners.size());
+                    //process Listeners
+                    for(SerialListener l : _listeners){
+                        
+                        l.portAdded(k);
+                    }
                 }
             }
            
-
-            //check for removed ports
-            
+            //check for removed ports 
             //loops throught the old list and compares it to the new one
             
-            i = portList.iterator();
-            while (i.hasNext()) {
-                String k = (String) i.next();
-
+            for(String k : portList){
                 if (!currentList.contains(k)) {
-                    
                     //remove from portlist too;
-                    System.out.println("auto remove " + k);
-                    if (currentPorts.containsKey(k)) {
-                        _homeNet.removePort(k);
-                    }
-                    portList.remove(k);
-                    //redrawGUI = true;
                     System.out.println("Port " + k + " was Disconnected");
+                    System.out.println("auto remove " + k);
+
+                    deactivatePort(k);
+                    currentPorts.remove(k);
+
+                    portList.remove(k);
+
+                    //process Listeners
+                    for(SerialListener l : _listeners){
+                        l.portRemoved(k);
+                    }
+                    
                 }
             }
         }
@@ -227,7 +290,7 @@ public class HomeNetApp {
             String id;                 // Thread name
             int count;                 // counter
             boolean check;
-
+            
             // Constructor, create the thread
             // It is not running by default
             SerialCheckThread(int w) {
@@ -247,6 +310,8 @@ public class HomeNetApp {
                 // Do whatever start does in Thread, don't forget this!
                 super.start();
             }
+            
+            
 
             void startChecking() {
                 check = true;

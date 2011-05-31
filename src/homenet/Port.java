@@ -4,6 +4,8 @@
  */
 package homenet;
 
+import java.util.*;
+
 /**
  *
  * @author mdoll
@@ -14,13 +16,14 @@ public abstract class Port {
     protected String _id;
     protected boolean _sending;// = false;
     protected boolean _receiving;// = false;
-    boolean started;
+    boolean started = false;
     long timeAdded;
 
+    Queue<Packet> sendQueue = new java.util.concurrent.ConcurrentLinkedQueue();
+    
     Port(Stack homeNet) {
         _homeNet = homeNet;
         timeAdded = System.currentTimeMillis(); //might need to offset or use java datetime
-        started = false;
     }
 
     public abstract void init(String id);

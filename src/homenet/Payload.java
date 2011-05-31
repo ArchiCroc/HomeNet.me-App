@@ -8,32 +8,32 @@ package homenet;
  *
  * @author mdoll
  */
-class Payload {
+public class Payload {
 
     int length = 0;
     byte[] data = new byte[56];
 
-    Payload(final byte value) {
+    public Payload(final byte value) {
         length = 1;
         data[0] = value;
     }
 
-    Payload(final byte[] value, final int size) {
+    public Payload(final byte[] value, final int size) {
         System.arraycopy(value, 0, data, 0, size);
         length = size;
     }
 
-    Payload(final byte[] value) {
+    public Payload(final byte[] value) {
         this(value, value.length);
     }
 
-    Payload(final int value) {
+    public Payload(final int value) {
         length = 2;
         data[1] = (byte) ((value >> 8) & 0xFF);
         data[0] = (byte) (value & 0xFF);
     }
 
-    Payload(final int[] value) {
+    public Payload(final int[] value) {
         length = value.length * 2;
         for (int i = 0; i < value.length; i += 2) {
             data[i * 2] = (byte) ((value[i] >> 8) & 0xFF);
@@ -41,7 +41,7 @@ class Payload {
         }
     }
 
-    Payload(final String string) {
+    public Payload(final String string) {
         length = string.length();
         for (int i = 0; i < length; i++) {
             data[i] = (byte) (string.charAt(i));
@@ -59,7 +59,7 @@ class Payload {
     }
      */
 
-    Payload(final float value) {
+    public Payload(final float value) {
         length = 0;
         /*
         union {
@@ -79,11 +79,11 @@ class Payload {
          */
     }
 
-    Payload(final float[] value) {
+    public Payload(final float[] value) {
         length = 0;
     }
 
-    Payload(final long value) {
+    public Payload(final long value) {
         length = 4;
         data[0] = (byte) ((value >> 24) & 0xFF);
         data[1] = (byte) ((value >> 16) & 0xFF);
@@ -91,7 +91,7 @@ class Payload {
         data[3] = (byte) (value & 0xFF);
     }
 
-    Payload() {
+    public Payload() {
         length = 0;
     }
 

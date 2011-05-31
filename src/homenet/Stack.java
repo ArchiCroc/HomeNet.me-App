@@ -25,14 +25,26 @@ public class Stack {
     private int _uniqueId;
     private int _scheduleCount;
     private long _deviceTimer;
+    
+    private ProcessThread _processThread; 
+    
+    
+    private ArrayList<Listener> _listeners = new ArrayList();
 
     public Stack(int id) {
         _nodeId = id;
         _uniqueId = 0;
+        _processThread = new ProcessThread(this, 10);
+        _processThread.start();
+    }
+    
+    public void addListener(Listener listener){
+        _listeners.add(listener);
     }
 
     public void addPort(String name, Port port) {
         _ports.put(name, port);
+        port.init(name);
     }
 
     public void removePort(String name) {
@@ -53,6 +65,8 @@ public class Stack {
         }
         return _uniqueId++;
     }
+    
+    
 
     public Packet getNewPacket() {
         if (_packets.size() > 10) {
@@ -94,10 +108,9 @@ public class Stack {
         }
     }
 
-    public void receive() {
-        Iterator iterator = _ports.values().iterator();
-        while (iterator.hasNext()) {
-            ((Port) iterator.next()).receive();
+    public void receive() {       
+        for(Port p : _ports.values()){
+            p.receive();
         }
     }
 
@@ -119,7 +132,6 @@ public class Stack {
     public boolean process() {
         boolean process = false;
 
-
         for (int i = _packets.size() - 1; i >= 0; i--) {
             if (_processPacket(_packets.get(i)) == true) {
                 process = true;
@@ -133,27 +145,38 @@ public class Stack {
     private boolean _processPacket(Packet packet) {
         switch (packet.getStatus()) {
             case STATUS_CLEAR:
+            //    System.out.println("Packet Status: Clear");
                 return false;
             // break;
-            case STATUS_RECEVING:
+            case STATUS_RECEIVING:
+           //     System.out.println("Packet Status: Receving");
                 return false;
             //  break;
             case STATUS_RECEIVED:
+            //    System.out.println("Packet Status: Received");
                 //debugPacket(packet);
+                //process Listeners
+                for(Listener l : _listeners){
+                    l.packetRecieved(packet);
+                }
+                
+                
 
                 if (packet.getToNode() == _nodeId) {
                     //@todo process received packet
                     // packetReceivedEvent(packet);
-                    packet.status = STATUS_CLEAR;
-                } else {
-                    packet.status = STATUS_READY;
+                    packet.setStatus(STATUS_CLEAR);
+                } else if(_ports.size()> 1) {
+                    packet.setStatus(STATUS_READY);
                 }
+                packet.setStatus(STATUS_CLEAR);
                 break;
             case STATUS_WAITING:
+              //  System.out.println("Packet Status: Waiting");
                 return false;
             //break;
             case STATUS_READY:
-
+               // System.out.println("Packet Status: Ready");
                 if (packet.getToNode() == _nodeId) { //check for packets to self and process them
                     processCommand(packet);
                     packet.setStatus(STATUS_CLEAR);
@@ -213,7 +236,7 @@ public class Stack {
 
                 break;
             case STATUS_SENDING:
-
+           //     System.out.println("Packet Status: Sending");
                 //because of the above, only one packet will be changed to sending, this keeps from blocking the loop too long
                 //debugPacket(packet);
                 if (_ports.containsKey(packet.toPort)) {
@@ -234,7 +257,7 @@ public class Stack {
                 }
                 break;
             case STATUS_SENT:
-                System.out.println("Status: Packet Sent");
+                System.out.println("Packet Status: Sent");
                 if (packet.getType() == 1) {
                     packet.setStatus(STATUS_ACK);
                     //start packets ack timer
@@ -248,10 +271,12 @@ public class Stack {
                 //count resends if exceds max kill packet and add error
                 break;
             case STATUS_SUCCESS:
+                System.out.println("Packet Status: Success");
                 //option to post status to screen
                 packet.setStatus(STATUS_CLEAR);
                 break;
             case STATUS_FAILED:
+                System.out.println("Packet Status: Failed");
                 //option to post status to screen
                 packet.setStatus(STATUS_CLEAR);
                 break;
@@ -271,13 +296,13 @@ public class Stack {
         return true;
     }
 
-    Payload packetToPayload(Packet packet) {
+    Payload packetToPayload(Packet packet) {      
         Payload payload = new Payload();
-
-        for (int i = 0; i < packet.getLength(); i++) {
-            payload.data[i] = packet.data[i];
-        }
-        return payload;
+        java.lang.System.arraycopy(packet.data, 0, payload.data, 0, packet.getLength());
+//        for (int i = 0; i < packet.getLength(); i++) {
+//            payload.data[i] = packet.data[i];
+//        }
+         return payload;
     }
 
     public int getNodeId() {
@@ -436,7 +461,7 @@ public class Stack {
     public int getVersion() {
         return 0x01;
     }
-;
+
 //ported from the avr crc lib
     
     
@@ -475,6 +500,7 @@ public class Stack {
     public void run() {
         while (running) {
             count = 0;
+            _homeNet.receive();
             while (_homeNet.process() == true) {
                 count++;
             };
