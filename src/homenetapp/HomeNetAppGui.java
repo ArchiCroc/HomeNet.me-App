@@ -81,6 +81,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     public void exit(){
         saveConfig();
         System.out.println("Exiting");
+        setVisible(false);
         homenetapp.exit();
         System.exit(0);
     }
@@ -216,6 +217,8 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         enableUPnPCheckBox = new javax.swing.JCheckBox();
         enableServerCheckBox = new javax.swing.JCheckBox();
         jSeparator1 = new javax.swing.JSeparator();
+        jPanel6 = new javax.swing.JPanel();
+        checkForUpdatesCheckBox = new javax.swing.JCheckBox();
         settingsSaveButton = new javax.swing.JButton();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
         cardPanel = new javax.swing.JPanel();
@@ -361,6 +364,11 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         SettingsDialog.setTitle("HomeNet Settings");
         SettingsDialog.setMinimumSize(new java.awt.Dimension(400, 300));
+        SettingsDialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowOpened(java.awt.event.WindowEvent evt) {
+                SettingsDialogWindowOpened(evt);
+            }
+        });
 
         serverLabel.setText("Server:");
 
@@ -477,6 +485,27 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Server", jPanel5);
 
+        checkForUpdatesCheckBox.setText("Check For Updates");
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(checkForUpdatesCheckBox)
+                .addContainerGap(252, Short.MAX_VALUE))
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel6Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(checkForUpdatesCheckBox)
+                .addContainerGap(137, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Settings", jPanel6);
+
         settingsSaveButton.setText("Save");
         settingsSaveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -520,7 +549,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         jLabel9.setText("Packets Received:");
 
         packetTextArea.setColumns(20);
-        packetTextArea.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
+        packetTextArea.setFont(new java.awt.Font("Courier New", 0, 12));
         packetTextArea.setRows(5);
         jScrollPane2.setViewportView(packetTextArea);
 
@@ -575,7 +604,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         consoleTextPane.setBackground(new java.awt.Color(0, 0, 0));
         consoleTextPane.setEditable(false);
-        consoleTextPane.setFont(new java.awt.Font("Consolas", 0, 10)); // NOI18N
+        consoleTextPane.setFont(new java.awt.Font("Consolas", 0, 10));
         consoleTextPane.setForeground(new java.awt.Color(255, 255, 255));
         jScrollPane1.setViewportView(consoleTextPane);
 
@@ -1020,6 +1049,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
          displayPacket(p);
     }//GEN-LAST:event_jList1ValueChanged
 
+    private void SettingsDialogWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_SettingsDialogWindowOpened
+        // TODO add your handling code here:
+    }//GEN-LAST:event_SettingsDialogWindowOpened
+
     class NodeVerifier extends javax.swing.InputVerifier {
 
         public boolean verify(javax.swing.JComponent input) {
@@ -1208,6 +1241,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JToggleButton autoUpdateToggleButton;
     private javax.swing.JPanel cardPanel;
     private javax.swing.JLabel certPropertiesLabel;
+    private javax.swing.JCheckBox checkForUpdatesCheckBox;
     private javax.swing.JComboBox commandComboBox;
     private javax.swing.JLabel commandLabel;
     private javax.swing.JTextPane consoleTextPane;
@@ -1229,6 +1263,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

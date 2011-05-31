@@ -129,8 +129,8 @@ public class XmlrpcServer {
 //            serverConfig.setEnabledForExtensions(true);
 //           serverConfig.setContentLengthOptional(false);
 
-       // server.start();
-        System.out.print("Starting XMLRPC Server");
+       server.start();
+        System.out.println("Starting XMLRPC Server");
 
     }
 

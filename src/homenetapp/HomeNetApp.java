@@ -35,6 +35,8 @@ public class HomeNetApp {
     private XmlrpcClient _xmlrpcClient;
     private XmlrpcServer _xmlrpcServer;
     
+    private UPnP upnp;
+    
         
     // public HashMap Por;
 
@@ -73,6 +75,19 @@ public class HomeNetApp {
         if(loadXmlrpc == true){
          //   homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
         }
+        upnp = new UPnP();
+        
+        System.out.println("IP Address: " + upnp.getIpAddress());
+       java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+//        upnp = new UPnP();
+                upnp.forwardPort(2443);
+           }
+        });
+        
+    
+       
+        
         
         
         
@@ -152,6 +167,9 @@ public class HomeNetApp {
     public void exit(){
         serialmanager.exit();
         saveConfig();
+        upnp.exit();
+
+        
     }
 
     
@@ -242,10 +260,9 @@ public class HomeNetApp {
                 if (!portList.contains(k)) {
                     portList.add(k);
                     System.out.println("New port found: " + k);
-                System.out.println("List size: " + _listeners.size());
+            //    System.out.println("List size: " + _listeners.size());
                     //process Listeners
                     for(SerialListener l : _listeners){
-                        
                         l.portAdded(k);
                     }
                 }
