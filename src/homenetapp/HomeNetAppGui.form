@@ -10,6 +10,9 @@
         </Property>
         <Property name="resizable" type="boolean" value="false"/>
       </Properties>
+      <Events>
+        <EventHandler event="windowOpened" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="SendPacketFrameWindowOpened"/>
+      </Events>
 
       <Layout>
         <DimensionLayout dim="0">
@@ -211,7 +214,11 @@
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[400, 300]"/>
         </Property>
+        <Property name="resizable" type="boolean" value="false"/>
       </Properties>
+      <AccessibilityProperties>
+        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="HomeNet App Settings"/>
+      </AccessibilityProperties>
       <Events>
         <EventHandler event="windowOpened" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="SettingsDialogWindowOpened"/>
       </Events>

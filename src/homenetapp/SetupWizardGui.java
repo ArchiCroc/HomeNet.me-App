@@ -43,11 +43,11 @@ public class SetupWizardGui extends javax.swing.JPanel {
         jTextPane1.setCaretPosition(0);
         
         //load settings from config
-        apikeyTextField.setText(homenetappgui.homenetapp.config.getString("client.apikey")); 
-        serverTextField.setText(homenetappgui.homenetapp.config.getString("client.server")); 
-        enableServerCheckBox.setSelected(homenetappgui.homenetapp.config.getBoolean("server.enabled")); 
-        enableUPnPCheckBox.setSelected(homenetappgui.homenetapp.config.getBoolean("server.upnp")); 
-        serverPortTextField.setText(homenetappgui.homenetapp.config.getString("server.port"));
+        apikeyTextField.setText(homenetappgui.homenetapp.clientApiKey); 
+        serverTextField.setText(homenetappgui.homenetapp.clientServer); 
+        enableServerCheckBox.setSelected(homenetappgui.homenetapp.serverEnabled); 
+        enableUPnPCheckBox.setSelected(homenetappgui.homenetapp.serverUpnpEnabled); 
+        serverPortTextField.setText(""+homenetappgui.homenetapp.serverPort);
         
         
         
@@ -410,22 +410,17 @@ public class SetupWizardGui extends javax.swing.JPanel {
 }//GEN-LAST:event_backButtonActionPerformed
 
     private void save() {
-        homenetappgui.homenetapp.config.setProperty("client.apikey",apikeyTextField.getText()); 
-        homenetappgui.homenetapp.config.setProperty("client.server",serverTextField.getText()); 
-        homenetappgui.homenetapp.config.setProperty("server.enabled",enableServerCheckBox.isSelected()); 
-        homenetappgui.homenetapp.config.setProperty("server.upnp",enableUPnPCheckBox.isSelected()); 
-        homenetappgui.homenetapp.config.setProperty("server.port",serverPortTextField.getText()); 
-        homenetappgui.homenetapp.config.setProperty("config.done",true); 
+        homenetappgui.homenetapp.clientApiKey = apikeyTextField.getText(); 
+        homenetappgui.homenetapp.clientServer = serverTextField.getText(); 
+        homenetappgui.homenetapp.serverEnabled = enableServerCheckBox.isSelected(); 
+        homenetappgui.homenetapp.serverUpnpEnabled = enableUPnPCheckBox.isSelected(); 
+        homenetappgui.homenetapp.serverPort = Integer.parseInt(serverPortTextField.getText()); 
+        homenetappgui.homenetapp.configDone = true; 
         try {
-        homenetappgui.homenetapp.config.save();
+        homenetappgui.homenetapp.saveConfig();
         } catch(Exception e){
             javax.swing.JOptionPane.showMessageDialog(null, "Can Not save config", "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
         }
-        //apikeyTextField
-        //serverTextField
-        //serverPortTextField
-        //enableUPnPCheckBox
-        //enableServerCheckBox
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel apiKeyLabel1;

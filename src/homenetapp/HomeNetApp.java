@@ -27,7 +27,7 @@ import org.apache.commons.configuration.*;
 public class HomeNetApp {
 
     public HashMap<Integer, String[]> commands;
-    public PropertiesConfiguration config;
+    public PropertiesConfiguration config = new PropertiesConfiguration();
     public homenet.Stack homenet;
     public SerialManager serialmanager;
     private XmlrpcClient _xmlrpcClient;
@@ -53,6 +53,9 @@ public class HomeNetApp {
     
     public boolean connectOutValid = true; //is the apikey/permissions valid
     public boolean connectInValid = true; //is the apikey/permissions valid
+    
+    List<String> portsSerial = new ArrayList();
+    
 
     // public HashMap Por;
     public HomeNetApp() {
@@ -88,17 +91,28 @@ public class HomeNetApp {
             //   homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
         }
         
-        
         upnp = new UPnP();
+        
         if((serverEnabled == true) && (serverUpnpEnabled == true)) {
             System.out.println("IP Address: " + upnp.getIpAddress());
 
             //start this in it's own thread since it takes a while
-            java.awt.EventQueue.invokeLater(new Runnable() {
-                public void run() {
-                    upnp.forwardPort(2443);
-                }
-            });
+            
+            
+            Thread runUpnp = new Thread() {
+              public void run(){
+                  upnp = new UPnP();
+                  upnp.forwardPort(2443);
+              }  
+            };
+            runUpnp.start();
+            
+//            java.awt.EventQueue.invokeLater(new Runnable() {
+//                public void run() {
+//                    upnp = new UPnP();
+//                    upnp.forwardPort(2443);
+//                }
+//            });
         }
     }
 
@@ -118,6 +132,8 @@ public class HomeNetApp {
         
         configDone = config.getBoolean("config.done");
         
+        portsSerial = config.getList("ports.serial");
+        
         return true;
     }
 
@@ -128,8 +144,9 @@ public class HomeNetApp {
         config.setProperty("server.enabled", serverEnabled);
         config.setProperty("server.upnp", serverUpnpEnabled);
         config.setProperty("server.port", serverPort);
+        config.setProperty("config.done", configDone);
 
-        config.save();
+        config.save("homenet.properties.txt");
     }
 
     private void loadCommands() {
@@ -158,7 +175,7 @@ public class HomeNetApp {
 
         Object[] rows = commands.keySet().toArray();
         Arrays.sort(rows, new compareCommands());
-        System.out.println("Length: " + rows.length);
+        System.out.println("Commands Loaded: " + rows.length);
 
 
         //Object[] rows = new Object[1]; 
@@ -206,8 +223,8 @@ public class HomeNetApp {
             //loadSerialPorts();
             checkSerialPorts();
 
-            List<String> list = config.getList("ports.serial");
-            for (String s : list) {
+           // List<String> list = config.getList("ports.serial");
+            for (String s : portsSerial) {
                 serialmanager.activatePort(s);
             }
 
