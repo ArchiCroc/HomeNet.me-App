@@ -51,7 +51,7 @@ public class UPnP {
     // UpnpService upnpService;
 
     String ipAddress;
-    GatewayDevice d;
+    GatewayDevice d = null;
     int port;
 
     public UPnP() {
@@ -64,6 +64,7 @@ public class UPnP {
 
         try {
             InetAddress thisIp = InetAddress.getLocalHost();
+           // thisIp.getHostAddress().
             return thisIp.getHostAddress().toString();
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,50 +75,28 @@ public class UPnP {
 
     public void forwardPort(int port) {
         this.port = port;
-
-//        PortMapping desiredMapping =
-//                new PortMapping(port, getIpAddress(), PortMapping.Protocol.TCP, "HomeNet.me App Server");
-//        
-//        System.out.println("UPnP: Forwarding port "+port+" to "+getIpAddress());
-//
-//         upnpService = new UpnpServiceImpl(new PortMappingListener(desiredMapping));
-//
-//        upnpService.getControlPoint().search();
-//         PortMapping desiredMapping =
-//                 new PortMapping(
-//                         8123,
-//                         "192.168.0.123",
-//                        PortMapping.Protocol.TCP,
-//                         "My Port Mapping"
-//                );
-//
-//         UpnpService upnpService = new UpnpServiceImpl();
-// 
-//         LocalDevice device = IGDSampleData.createIGDevice(TestConnection.class);
-//         upnpService.getRegistry().addDevice(device);
-//
-//         LocalService service = device.findService(new UDAServiceId("WANIPConnection"));         // DOC: PM1
-//
-//         upnpService.getControlPoint().execute(
-//            new PortMappingAdd(service, desiredMapping) {
-//
-//               @Override
-//                public void success(ActionInvocation invocation) {
-//                     // All OK
-//                    tests[0] = true;                                                        // DOC: EXC1
-//                 }
-// 
-//                 @Override
-//                 public void failure(ActionInvocation invocation,
-//                                     UpnpResponse operation,
-//                                     String defaultMsg) {
-//                     // Something is wrong
-//                 }
-//             }
-//         );
+        
+        //check to see if it is actually a private ip
+        
+        InetAddress thisIp = null;
+        
+         try {
+            thisIp = InetAddress.getLocalHost();
+           // thisIp.getHostAddress().
+            ipAddress = thisIp.getHostAddress().toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+         
+         if((thisIp == null) || !thisIp.isSiteLocalAddress()){
+             System.out.println("On a Public Network, no need for UPnP");
+             return;
+         }
+        
+        
+        
+        
         try {
-
-
             //  int port = 2443;
             int WAIT_TIME = 10;
 
@@ -149,8 +128,6 @@ public class UPnP {
 
                 if (d.addPortMapping(port, port, localAddress.getHostAddress(), "TCP", "HomeNet App")) {
                     System.out.println("Mapping succesful");
-
-
                 }
 
             } else {
@@ -163,11 +140,13 @@ public class UPnP {
     }
 
     public void exit() {
-        try {
-            d.deletePortMapping(port, "TCP");
-            System.out.println("Port mapping removed");
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(d != null){
+            try {
+                d.deletePortMapping(port, "TCP");
+                System.out.println("Port mapping removed");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

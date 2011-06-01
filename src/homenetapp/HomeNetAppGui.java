@@ -33,11 +33,19 @@ import homenet.XmlrpcClient;
  * @author mdoll
  */
 public class HomeNetAppGui extends javax.swing.JFrame {
-    
-    public HashMap<String,JCheckBoxMenuItem> menuItems = new HashMap();
+
+    public HashMap<String, JCheckBoxMenuItem> menuItems = new HashMap();
     public HomeNetApp homenetapp;
-    
     private LinkedList<homenet.Packet> packetList = new LinkedList();
+    
+    //default settings
+    int packetToNode = 1;
+    int packetToDevice = 1;
+    int packetFromNode = 255;
+    int packetFromDevice = 0;
+    int packetCommand = 0;
+    String packetPayload = "test";
+    boolean prefAutoUpdatePacket = true;
 
     /** Creates new form HomeNetAppGui */
     public HomeNetAppGui() {
@@ -48,17 +56,15 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         //if not configured
         //if(true){
-        if (homenetapp.config.getBoolean("config.done") == false) {
+        if (homenetapp.configDone == false) {
             System.out.println("HomeNet App Not Setup");
             System.out.println("Launching Setup Wizard");
             javax.swing.JPanel wizardPanel = new SetupWizardGui(this);
-
             cardPanel.add(wizardPanel, "wizard");
             //validate();
 
             pack();
             wizardPanel.setVisible(true);
-
 
             ((java.awt.CardLayout) cardPanel.getLayout()).next(cardPanel);
             // ((java.awt.CardLayout) cardPanel.getLayout()).show(cardPanel,"wizard");
@@ -77,8 +83,8 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         topMenuBar.setVisible(true);
         ((java.awt.CardLayout) cardPanel.getLayout()).first(cardPanel);
     }
-    
-    public void exit(){
+
+    public void exit() {
         saveConfig();
         System.out.println("Exiting");
         setVisible(false);
@@ -112,48 +118,49 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 addPacketToList(packet);
             }
         });
-        
-        homenetapp.serialmanager.addListener(new SerialListener(){
-             public void portAdded(String name){
+
+        homenetapp.serialmanager.addListener(new SerialListener() {
+
+            public void portAdded(String name) {
                 System.out.println("portAddedEvent");
-                
+
                 javax.swing.JCheckBoxMenuItem serialPortCheckBox = new javax.swing.JCheckBoxMenuItem(name);
- 
+
                 serialPortCheckBox.addActionListener(new java.awt.event.ActionListener() {
 
                     public void actionPerformed(java.awt.event.ActionEvent evt) {
-                         JCheckBoxMenuItem checkbox = (JCheckBoxMenuItem) evt.getSource();
-                         if(checkbox.isSelected()){
-                            if(homenetapp.serialmanager.activatePort(checkbox.getText()) != true){
-                                javax.swing.JOptionPane.showMessageDialog(null, "Can't Connect to Port "+checkbox.getText()+". Try again in a few seconds", "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
+                        JCheckBoxMenuItem checkbox = (JCheckBoxMenuItem) evt.getSource();
+                        if (checkbox.isSelected()) {
+                            if (homenetapp.serialmanager.activatePort(checkbox.getText()) != true) {
+                                javax.swing.JOptionPane.showMessageDialog(null, "Can't Connect to Port " + checkbox.getText() + ". Try again in a few seconds", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
                             }
-                         } else {
-                             homenetapp.serialmanager.deactivatePort(checkbox.getText());
-                         }
+                        } else {
+                            homenetapp.serialmanager.deactivatePort(checkbox.getText());
+                        }
                     }
                 });
 
                 // serialPortCheckBox.setMnemonic(java.awt.event.KeyEvent.VK_1);
                 menuItems.put(name, serialPortCheckBox);
                 menuSerialPorts.add(serialPortCheckBox);
- 
+
             }
 
-            public void portRemoved(String name){
+            public void portRemoved(String name) {
                 System.out.println("portRemovedEvent");
                 menuSerialPorts.remove(menuItems.get(name));
             }
-            public void portActivated(String name){
+
+            public void portActivated(String name) {
                 System.out.println("portActivatedEvent");
-                 menuItems.get(name).setSelected(true);
-                
+                menuItems.get(name).setSelected(true);
+
             }
 
-            public void portDeactivated(String name){
+            public void portDeactivated(String name) {
                 System.out.println("portDeactivatedEvent");
                 menuItems.get(name).setSelected(false);
             }
-        
         });
 
 
@@ -174,6 +181,44 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 }
             });
         }
+    }
+    
+    private void loadConfig(){
+        //load gui config settings
+        try {
+            packetToNode = homenetapp.config.getInt("packet.tonode");
+            packetToDevice = homenetapp.config.getInt("packet.todevice");
+            packetFromNode = homenetapp.config.getInt("packet.fromnode");
+            packetFromDevice = homenetapp.config.getInt("packet.fromdevice");
+            packetCommand = homenetapp.config.getInt("packet.command");
+            packetPayload = homenetapp.config.getString("packet.payload");
+        } catch(Exception e){
+            
+        }
+    }
+    
+    
+
+    private void loadSettings() {
+        serverTextField.setText(homenetapp.clientServer);
+        apiKeyTextField.setText(homenetapp.clientApiKey);
+        enableServerCheckBox.setSelected(homenetapp.serverEnabled);
+        enableUPnPCheckBox.setSelected(homenetapp.serverUpnpEnabled);
+        serverPortTextField.setText("" + homenetapp.serverPort);
+
+        if (!homenetapp.serverEnabled) {
+            enableUPnPCheckBox.setEnabled(false);
+            serverPortLabel.setEnabled(false);
+            serverPortTextField.setEnabled(false);
+        }
+
+        //send packet
+        toNodeSpinner.setValue(packetToNode);
+        toDeviceSpinner.setValue(packetToDevice);
+        fromNodeSpinner.setValue(packetFromNode);
+        fromDeviceSpinner.setValue(packetFromDevice);
+        commandComboBox.setSelectedIndex(packetCommand);
+        payloadTextField.setText(packetPayload);
     }
 
     /** This method is called from within the constructor to
@@ -504,7 +549,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 .addContainerGap(137, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Settings", jPanel6);
+        jTabbedPane1.addTab("Preferences", jPanel6);
 
         settingsSaveButton.setText("Save");
         settingsSaveButton.addActionListener(new java.awt.event.ActionListener() {
@@ -765,18 +810,18 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     }//GEN-LAST:event_menuToolsSendPacketActionPerformed
 
     private void sendPacketButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendPacketButtonActionPerformed
-        
-       // homenetapp.homenet.addUdpPacket((int) fromDeviceSpinner.getValue(), (int) toNodeSpinner.getValue(), 
-       //         (int) toDeviceSpinner.getValue(), 2, new Payload("test"));
-        
-     //   int fromDevice = ;
-        
-        
-        homenet.Packet p = homenetapp.homenet.addUdpPacket((Integer) fromDeviceSpinner.getValue(), (Integer) toNodeSpinner.getValue(), 
-                (Integer) toDeviceSpinner.getValue(), (Integer)commandComboBox.getSelectedItem(), new homenet.Payload("test"));
-        
+
+        // homenetapp.homenet.addUdpPacket((int) fromDeviceSpinner.getValue(), (int) toNodeSpinner.getValue(), 
+        //         (int) toDeviceSpinner.getValue(), 2, new Payload("test"));
+
+        //   int fromDevice = ;
+
+
+        homenet.Packet p = homenetapp.homenet.addUdpPacket((Integer) fromDeviceSpinner.getValue(), (Integer) toNodeSpinner.getValue(),
+                (Integer) toDeviceSpinner.getValue(), (Integer) commandComboBox.getSelectedItem(), new homenet.Payload("test"));
+
         displayPacket(p);
-        
+
 
     }//GEN-LAST:event_sendPacketButtonActionPerformed
 
@@ -784,14 +829,14 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         if (!java.awt.Desktop.isDesktopSupported()) {
             System.err.println("Desktop is not supported (fatal)");
-          //  System.exit(1);
+            //  System.exit(1);
         }
 
         java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
 
         if (!desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
             System.err.println("Desktop doesn't support the browse action (fatal)");
-           // System.exit(1);
+            // System.exit(1);
         }
 
         try {
@@ -803,91 +848,12 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_menuHelpOnlineActionPerformed
 
-    private void loadSettings() {
-        serverTextField.setText(homenetapp.config.getString("client.server"));
-        apiKeyTextField.setText(homenetapp.config.getString("client.apikey"));
-        enableServerCheckBox.setSelected(homenetapp.config.getBoolean("server.enabled")); 
-        enableUPnPCheckBox.setSelected(homenetapp.config.getBoolean("server.upnp")); 
-        serverPortTextField.setText(homenetapp.config.getString("server.port"));
-        
-        if(!homenetapp.config.getBoolean("server.enabled")){
-            enableUPnPCheckBox.setEnabled(false);
-            serverPortLabel.setEnabled(false);
-            serverPortTextField.setEnabled(false);
-        }
-        
-        //send packet
-        toNodeSpinner.setValue(homenetapp.config.getInt("packet.tonode"));
-        toDeviceSpinner.setValue(homenetapp.config.getInt("packet.todevice"));
-        fromNodeSpinner.setValue(homenetapp.config.getInt("packet.fromnode"));
-        fromDeviceSpinner.setValue(homenetapp.config.getInt("packet.fromdevice"));
-        commandComboBox.setSelectedIndex(homenetapp.config.getInt("packet.command"));
-        payloadTextField.setText(homenetapp.config.getString("packet.payload"));
-        
-        
-        
-    }
-    
-    
-
-    class CommandRenderer extends BasicComboBoxRenderer {
-
-        public java.awt.Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            Integer item = (Integer) value;
-            if (value != null) {
-                // Integer item = (Integer) value;
-                setText(homenetapp.commands.get(item)[1]);
-                return this;
-            }
-
-            if (index == -1) {
-                //  setText("Select Command");
-                // Item item = (Item) value;
-                //  setText("index -1");// + item.getId()
-                //  System.out.println(homenetapp.commands.get(item)[1]);
-            }
-
-
-            return this;
-        }
-    }
-    
-
-
-    private void SetupMenuSerialPorts() {
-//        System.out.println("SetupSerialMenuPorts");
-//        List<String> savedPorts = homenetapp.config.getList("ports.serial");
-//
-//        ArrayList<String> ports = homenet.Serial.listPorts();
-//        for(String element : ports){
-//            System.out.println("String Setup: "+element);
-//            System.out.println(element);
-//            javax.swing.JCheckBoxMenuItem serialPortCheckBox = new javax.swing.JCheckBoxMenuItem(element);
-//            if (savedPorts.contains(element)) {
-//                serialPortCheckBox.setSelected(true);
-//                //serialPortCheckBox.
-//            }
-//            serialPortCheckBox.addActionListener(new java.awt.event.ActionListener() {
-//
-//                public void actionPerformed(java.awt.event.ActionEvent evt) {
-//                    menuSerialPortCheckBoxAction(evt);
-//                }
-//            });
-//
-//            // serialPortCheckBox.setMnemonic(java.awt.event.KeyEvent.VK_1);
-//            menuSerialPorts.add(serialPortCheckBox);
-//        }
-    }
-
-
-
     private void menuSerialPortsMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuSerialPortsMenuSelected
-        System.out.println("Get Ports");        
-        for(String s : homenetapp.serialmanager.portList){
-            System.out.println("Port: "+s);
+        System.out.println("Get Ports");
+        for (String s : homenetapp.serialmanager.portList) {
+            System.out.println("Port: " + s);
         }
-        
+
         //javax.swing.JCheckBoxMenuItem cbMenuItem = new javax.swing.JCheckBoxMenuItem("A check box menu item");
         //cbMenuItem.setMnemonic(KeyEvent.VK_C);
         //menuSerialPorts.add(cbMenuItem);
@@ -912,34 +878,32 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         SettingsDialog.setVisible(true);
     }//GEN-LAST:event_menuToolsSettingsActionPerformed
 
-    public void saveConfig(){
-         //save properties
+    public void saveConfig() {
+        //save properties
         //page1
         homenetapp.config.setProperty("client.server", serverTextField.getText());
         homenetapp.config.setProperty("client.apikey", apiKeyTextField.getText());
-        homenetapp.config.setProperty("server.enabled",enableServerCheckBox.isSelected()); 
-        homenetapp.config.setProperty("server.upnp",enableUPnPCheckBox.isSelected()); 
-        homenetapp.config.setProperty("server.port",serverPortTextField.getText()); 
-        
-        homenetapp.config.setProperty("packet.tonode",toNodeSpinner.getValue());
-        homenetapp.config.setProperty("packet.todevice",toDeviceSpinner.getValue());
-        homenetapp.config.setProperty("packet.fromnode",fromNodeSpinner.getValue());
-        homenetapp.config.setProperty("packet.fromdevice",fromDeviceSpinner.getValue());
-        homenetapp.config.setProperty("packet.command",commandComboBox.getSelectedIndex());
-        homenetapp.config.setProperty("packet.payload",payloadTextField.getText());
-        
+        homenetapp.config.setProperty("server.enabled", enableServerCheckBox.isSelected());
+        homenetapp.config.setProperty("server.upnp", enableUPnPCheckBox.isSelected());
+        homenetapp.config.setProperty("server.port", serverPortTextField.getText());
+
+        homenetapp.config.setProperty("packet.tonode", toNodeSpinner.getValue());
+        homenetapp.config.setProperty("packet.todevice", toDeviceSpinner.getValue());
+        homenetapp.config.setProperty("packet.fromnode", fromNodeSpinner.getValue());
+        homenetapp.config.setProperty("packet.fromdevice", fromDeviceSpinner.getValue());
+        homenetapp.config.setProperty("packet.command", commandComboBox.getSelectedIndex());
+        homenetapp.config.setProperty("packet.payload", payloadTextField.getText());
+
         try {
             homenetapp.config.save();
         } catch (Exception e) {
-            javax.swing.JOptionPane.showMessageDialog(null, "Could not save config", "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
-                            
+            javax.swing.JOptionPane.showMessageDialog(null, "Could not save config", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+
         }
     }
-    
-    
-    
+
     private void settingsSaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsSaveButtonActionPerformed
-       
+
         saveConfig();
         SettingsDialog.setVisible(false);
     }//GEN-LAST:event_settingsSaveButtonActionPerformed
@@ -1031,12 +995,12 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     private void autoUpdateToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoUpdateToggleButtonActionPerformed
         //if selected
-         javax.swing.JToggleButton button = ( javax.swing.JToggleButton)evt.getSource();
-         if(button.isSelected()){
-             System.out.println("Button Toggled");
-         } else {
-             System.out.println("Button UnToggled");
-         }
+        javax.swing.JToggleButton button = (javax.swing.JToggleButton) evt.getSource();
+        if (button.isSelected()) {
+            System.out.println("Button Toggled");
+        } else {
+            System.out.println("Button UnToggled");
+        }
         //else
     }//GEN-LAST:event_autoUpdateToggleButtonActionPerformed
 
@@ -1044,14 +1008,38 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         int index = evt.getFirstIndex();
         JList j = (JList) evt.getSource();
         homenet.Packet p = (homenet.Packet) j.getSelectedValue();
-        
+
         //homenet.Packet p = (homenet.Packet)packetListModel.getElementAt(index);
-         displayPacket(p);
+        displayPacket(p);
     }//GEN-LAST:event_jList1ValueChanged
 
     private void SettingsDialogWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_SettingsDialogWindowOpened
-        // TODO add your handling code here:
+        System.out.println("Settings Window Opened");
+        loadSettings();
     }//GEN-LAST:event_SettingsDialogWindowOpened
+
+    class CommandRenderer extends BasicComboBoxRenderer {
+
+        public java.awt.Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            Integer item = (Integer) value;
+            if (value != null) {
+                // Integer item = (Integer) value;
+                setText(homenetapp.commands.get(item)[1]);
+                return this;
+            }
+
+            if (index == -1) {
+                //  setText("Select Command");
+                // Item item = (Item) value;
+                //  setText("index -1");// + item.getId()
+                //  System.out.println(homenetapp.commands.get(item)[1]);
+            }
+
+
+            return this;
+        }
+    }
 
     class NodeVerifier extends javax.swing.InputVerifier {
 
@@ -1071,8 +1059,12 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
             public void run() {
                 javax.swing.text.Document doc = consoleTextPane.getDocument();
+                
                 try {
                     doc.insertString(doc.getLength(), text, null);
+                    if(doc.getLength() > 10000){
+                        doc.remove(0, text.length());
+                    }
                 } catch (javax.swing.text.BadLocationException e) {
                     throw new RuntimeException(e);
                 }
@@ -1106,37 +1098,34 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     public void addPacketToList(homenet.Packet packet) {
         System.out.println("Adding Packet to GUI");
-       // packetList.addLast(packet);
+        // packetList.addLast(packet);
         packetListModel.addElement(packet);
-  
-        if(packetListModel.size() > 10){
-           // packetList.removeFirst();
+
+        if (packetListModel.size() > 10) {
+            // packetList.removeFirst();
             packetListModel.remove(0);
         }
         //    jList1.validate();
-        
-        if(autoUpdateToggleButton.isSelected()){
+
+        if (autoUpdateToggleButton.isSelected()) {
             jList1.setSelectedValue(packet, true);
         }
-       // jScrollPane3.
+        // jScrollPane3.
     }
-    
-    
-    
+
 //    class PacketListModel extends DefaultListModel {
 //         //   String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
 //            public int getSize() { return packetList.size(); }
 //            public Object getElementAt(int i) { return packetList.get(i); }
 //    }
-    
     class PacketListRenderer extends DefaultListCellRenderer {
 
         public java.awt.Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    System.out.println("PacketListRenderer");
+            System.out.println("PacketListRenderer");
             if (value != null) {
                 homenet.Packet p = (homenet.Packet) value;
-                setText(p.getFromPort()+"->"+p.getToPort()+" "+p.getFromNode()+":"+p.getFromDevice()+ ">"+p.getToNode()+":"+p.getToDevice()+" "+p.getId());
+                setText(p.getFromPort() + "->" + p.getToPort() + " " + p.getFromNode() + ":" + p.getFromDevice() + ">" + p.getToNode() + ":" + p.getToDevice() + " " + p.getId());
                 return this;
             }
 
@@ -1149,46 +1138,46 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             return this;
         }
     }
-    
-    private void displayPacket(homenet.Packet packet){
-        
-    String message = "";
-    String message2 = "";
-    for(int i=0; i < packet.getPayloadLength(); i++){
-      message += (int)packet.getPayloadAt(i);
-      message += ",";
-      message2 += (char)packet.getPayloadAt(i);
-    } 
-    
-    //lookup command;
-   String c =  ""+packet.getCommand();
-    
-   if(homenetapp.commands.containsKey(packet.getCommand()) == true){
-    // String[] c = commandMap.get(int(packet[4]));
-   //  println(c);
-     c = homenetapp.commands.get(packet.getCommand())[1];
 
-   }
-          packetTextArea.setText(
-    "  Received: " + packet.getTimestamp() + "\n" +
-    "  fromPort: " + packet.getFromPort() + "\n" +
-    "    toPort: " + packet.getToPort() + "\n" +
-    "    status: " + packet.getStatus() + "\n" +
-    "    length: " + packet.getLength() + "\n" +
-    "  settings: " + packet.getSettings() + "\n" +
-    "      type: " + packet.getType() + "\n" +
-    "  fromNode: " + packet.getFromNode() + "\n" +
-    "fromDevice: " + packet.getFromDevice() + "\n" +
-    "    toNode: " + packet.getToNode() + "\n" +
-    "  toDevice: " + packet.getToDevice() + "\n" +
-    //"       ttl: " + packet.getTtl() + "\n" +
-    "        id: " + packet.getId() + "\n" +
-    "   command: " + c  + "\n" +
-    "   payload: " + message + "\n" +
-    "   payload: " + message2 + "\n" +
-    "  checksum: " + packet.getChecksum());
+    private void displayPacket(homenet.Packet packet) {
+
+        String message = "";
+        String message2 = "";
+        for (int i = 0; i < packet.getPayloadLength(); i++) {
+            message += (int) packet.getPayloadAt(i);
+            message += ",";
+            message2 += (char) packet.getPayloadAt(i);
+        }
+
+        //lookup command;
+        String c = "" + packet.getCommand();
+
+        if (homenetapp.commands.containsKey(packet.getCommand()) == true) {
+            // String[] c = commandMap.get(int(packet[4]));
+            //  println(c);
+            c = homenetapp.commands.get(packet.getCommand())[1];
+
+        }
+        packetTextArea.setText(
+                "  Received: " + packet.getTimestamp() + "\n"
+                + "  fromPort: " + packet.getFromPort() + "\n"
+                + "    toPort: " + packet.getToPort() + "\n"
+                + "    status: " + packet.getStatus() + "\n"
+                + "    length: " + packet.getLength() + "\n"
+                + "  settings: " + packet.getSettings() + "\n"
+                + "      type: " + packet.getType() + "\n"
+                + "  fromNode: " + packet.getFromNode() + "\n"
+                + "fromDevice: " + packet.getFromDevice() + "\n"
+                + "    toNode: " + packet.getToNode() + "\n"
+                + "  toDevice: " + packet.getToDevice() + "\n"
+                + //"       ttl: " + packet.getTtl() + "\n" +
+                "        id: " + packet.getId() + "\n"
+                + "   command: " + c + "\n"
+                + "   payload: " + message + "\n"
+                + "   payload: " + message2 + "\n"
+                + "  checksum: " + packet.getChecksum());
     }
-    
+
     private void checkClientCert() {
         try {
             URL url = new URL("https://mail.google.com/");
