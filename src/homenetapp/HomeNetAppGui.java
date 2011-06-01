@@ -37,7 +37,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     public HashMap<String, JCheckBoxMenuItem> menuItems = new HashMap();
     public HomeNetApp homenetapp;
     private LinkedList<homenet.Packet> packetList = new LinkedList();
-    
     //default settings
     int packetToNode = 1;
     int packetToDevice = 1;
@@ -50,14 +49,14 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     /** Creates new form HomeNetAppGui */
     public HomeNetAppGui() {
         this.setLocationRelativeTo(null);
-       
-       
-       
+
+
+
 
         homenetapp = new HomeNetApp();
 
         initComponents();
-       // redirectSystemStreams();
+        // redirectSystemStreams();
         System.err.println("test");
         SettingsDialog.setLocationRelativeTo(null);
 
@@ -81,11 +80,12 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         }
 
         //redirect console to gui
-        
+
     }
 
     public void startMainGui() {
-        System.out.append("startMainGui");
+        loadConfig();
+      //  System.out.append("startMainGui");
         startHomeNetApp();
         topMenuBar.setVisible(true);
         ((java.awt.CardLayout) cardPanel.getLayout()).first(cardPanel);
@@ -188,8 +188,8 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             });
         }
     }
-    
-    private void loadConfig(){
+
+    private void loadConfig() {
         //load gui config settings
         try {
             packetToNode = homenetapp.config.getInt("packet.tonode");
@@ -198,17 +198,17 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             packetFromDevice = homenetapp.config.getInt("packet.fromdevice");
             packetCommand = homenetapp.config.getInt("packet.command");
             packetPayload = homenetapp.config.getString("packet.payload");
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-      public void saveConfig() {
+
+    public void saveConfig() {
         //save properties
         //page1
 
 
-        homenetapp.config.setProperty("packet.tonode",   packetToNode);
+        homenetapp.config.setProperty("packet.tonode", packetToNode);
         homenetapp.config.setProperty("packet.todevice", packetToDevice);
         homenetapp.config.setProperty("packet.fromnode", packetFromNode);
         homenetapp.config.setProperty("packet.fromdevice", packetFromDevice);
@@ -223,8 +223,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         }
     }
-    
-    
 
     private void loadSettings() {
         serverTextField.setText(homenetapp.clientServer);
@@ -240,7 +238,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         }
 
         //send packet
-        
+
     }
 
     /** This method is called from within the constructor to
@@ -624,7 +622,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         jLabel9.setText("Packets Received:");
 
         packetTextArea.setColumns(20);
-        packetTextArea.setFont(new java.awt.Font("Courier New", 0, 12));
+        packetTextArea.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
         packetTextArea.setRows(5);
         jScrollPane2.setViewportView(packetTextArea);
 
@@ -845,23 +843,23 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         //         (int) toDeviceSpinner.getValue(), 2, new Payload("test"));
 
         //   int fromDevice = ;
-        
-        
-        
+
+
+
         packetToNode = (Integer) toNodeSpinner.getValue();
-    packetToDevice = (Integer)toDeviceSpinner.getValue();
-    packetFromNode = (Integer)fromNodeSpinner.getValue();
-    packetFromDevice = (Integer) fromDeviceSpinner.getValue();
-    packetCommand = commandComboBox.getSelectedIndex();
-    packetPayload = payloadTextField.getText();
-        
-        
+        packetToDevice = (Integer) toDeviceSpinner.getValue();
+        packetFromNode = (Integer) fromNodeSpinner.getValue();
+        packetFromDevice = (Integer) fromDeviceSpinner.getValue();
+        packetCommand = commandComboBox.getSelectedIndex();
+        packetPayload = payloadTextField.getText();
 
 
-        homenet.Packet p = homenetapp.homenet.addUdpPacket(packetFromDevice, packetFromNode,
-                packetFromDevice, (Integer) commandComboBox.getSelectedItem(), new homenet.Payload(packetPayload));
 
-        displayPacket(p);
+
+        homenet.Packet p = homenetapp.homenet.addUdpPacket(packetFromDevice, packetToNode,
+                packetToDevice, (Integer) commandComboBox.getSelectedItem(), new homenet.Payload(packetPayload));
+
+    //    displayPacket(p);
 
 
     }//GEN-LAST:event_sendPacketButtonActionPerformed
@@ -919,10 +917,19 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         SettingsDialog.setVisible(true);
     }//GEN-LAST:event_menuToolsSettingsActionPerformed
 
-  
-
     private void settingsSaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsSaveButtonActionPerformed
-
+       
+        //detect changes
+        
+        homenetapp.clientServer = serverTextField.getText();
+        homenetapp.clientApiKey = apiKeyTextField.getText();
+        homenetapp.serverEnabled = enableServerCheckBox.isSelected();
+        homenetapp.serverUpnpEnabled = enableUPnPCheckBox.isSelected();
+        homenetapp.serverPort = Integer.parseInt(serverPortTextField.getText());
+                
+        
+        
+        //alert to reboot app
         saveConfig();
         SettingsDialog.setVisible(false);
     }//GEN-LAST:event_settingsSaveButtonActionPerformed
@@ -1081,10 +1088,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             return false;
         }
     }
-    
+
     private void updateTextPane(final String text) {
         updateTextPane(text, null);
-    
+
     }
 
     private void updateTextPane(final String text, final javax.swing.text.Style color) {
@@ -1092,17 +1099,17 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
             public void run() {
                 javax.swing.text.StyledDocument doc = consoleTextPane.getStyledDocument();
-                
+
                 try {
-                    
-                  // consoleTextPane.se
-                    if(color != null){
+
+                    // consoleTextPane.se
+                    if (color != null) {
                         doc.setLogicalStyle(doc.getLength(), color);
                     }
-                   doc.insertString(doc.getLength(), text, null); 
-                  
-                  
-                    if(doc.getLength() > 10000){
+                    doc.insertString(doc.getLength(), text, null);
+
+
+                    if (doc.getLength() > 10000) {
                         doc.remove(0, text.length());
                     }
                 } catch (javax.swing.text.BadLocationException e) {
@@ -1114,15 +1121,15 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     }
 
     private void redirectSystemStreams() {
-        
+
         javax.swing.text.Style style = consoleTextPane.addStyle("Red", null);
         javax.swing.text.StyleConstants.setForeground(style, java.awt.Color.red);
         final javax.swing.text.Style redStyle = style;
-        
+
         style = consoleTextPane.addStyle("White", null);
         javax.swing.text.StyleConstants.setForeground(style, java.awt.Color.white);
         final javax.swing.text.Style whiteStyle = style;
-        
+
         OutputStream out = new OutputStream() {
 
             @Override
@@ -1140,7 +1147,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 write(b, 0, b.length);
             }
         };
-        
+
         OutputStream err = new OutputStream() {
 
             @Override

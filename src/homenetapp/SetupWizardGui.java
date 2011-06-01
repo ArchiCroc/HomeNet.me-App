@@ -41,17 +41,15 @@ public class SetupWizardGui extends javax.swing.JPanel {
         initComponents();
         jScrollPane1.getViewport().setViewPosition(new java.awt.Point(0,0));
         jTextPane1.setCaretPosition(0);
-        
+
+        System.out.println("Wizard Server: "+homenetappgui.homenetapp.clientServer);
+
         //load settings from config
         apikeyTextField.setText(homenetappgui.homenetapp.clientApiKey); 
         serverTextField.setText(homenetappgui.homenetapp.clientServer); 
         enableServerCheckBox.setSelected(homenetappgui.homenetapp.serverEnabled); 
         enableUPnPCheckBox.setSelected(homenetappgui.homenetapp.serverUpnpEnabled); 
-        serverPortTextField.setText(""+homenetappgui.homenetapp.serverPort);
-        
-        
-        
-        
+        serverPortTextField.setText(""+homenetappgui.homenetapp.serverPort);       
     }
 
     /** This method is called from within the constructor to

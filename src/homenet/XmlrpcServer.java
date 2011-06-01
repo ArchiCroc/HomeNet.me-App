@@ -69,6 +69,7 @@ public class XmlrpcServer {
 
       mapping.setRequestProcessorFactoryFactory(new myRequestProcessorFactoryFactory());
       mapping.setVoidMethodEnabled(true);
+      
       //phm.addHandler(EchoService.class.getName(), EchoService.class);
      // xmlRpcServer.setHandlerMapping(phm);
 
@@ -109,9 +110,12 @@ public class XmlrpcServer {
     
 
     public XmlrpcServer(int port) throws IOException, ServletException {
+        
+        
         this.port = port;
-
+        System.out.println("Starting Servlet");
         servlet = new MyServlet();
+  //  System.out.println("Servlet name:"+servlet.getServletName()+" info:"+servlet.getServletInfo());
    
 
         server = new ServletWebServer(servlet, port);
@@ -128,7 +132,7 @@ public class XmlrpcServer {
 //                (XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
 //            serverConfig.setEnabledForExtensions(true);
 //           serverConfig.setContentLengthOptional(false);
-
+//server.
        server.start();
         System.out.println("Starting XMLRPC Server");
 

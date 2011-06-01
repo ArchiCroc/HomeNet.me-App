@@ -1,7 +1,11 @@
 package homenet;
 
+import static homenet.Packet.*;
+
 import java.util.*;
 import java.text.SimpleDateFormat;
+
+import org.apache.commons.codec.binary.Base64;
 
 /**
  *
@@ -14,6 +18,7 @@ public class PortXmlrpc extends Port {
     int _node;
 
     public PortXmlrpc(Stack homeNet, XmlrpcClient c, int n) {
+        
         super(homeNet);
         _client = c;
         _node = n;
@@ -27,63 +32,66 @@ public class PortXmlrpc extends Port {
 
     @Override
     public void init(String id) {
+        
+        System.out.println("Init Port: "+id);
+        
         _id = id;
         started = true;
     }
 
     @Override
     public void send(Packet packet) {
-//
-//            if ((_node == 0) || (_node == packet.getToNode())) {
-//
-//                Hashtable xmlpacket = new Hashtable();
-//                System.out.println(new String(Base64.encodeBase64(packet.getData())));
-//                String packetBase64 = new String(Base64.encodeBase64(packet.getData()));
-//                xmlpacket.put("timestamp", getDateAsISO8601String(packet.getTimestamp()));
-//                xmlpacket.put("packet", packetBase64);
-//                //System.out.println("DAte: "+packet.getTimestamp().toString());
-//                String reply = "";
-//
-//                try {
-//                    reply = (String) homeNetXmlrpcClient.execute("HomeNet.packet", xmlpacket);
-//                    //reply = (String)homeNetXmlrpcClient.execute("HomeNet.ping", "test test3242342");
-//                } catch (Exception e) {
-//                    System.out.println("XMLRPC Error: " + e);
-//                }
-//
-//                if (reply.equals("true")) {
-//                    msg("Packet Successfuly sent to HomeNet.me");
-//                } else if (!reply.equals(null)) {
-//                    msg("HomeNet.me Error- " + reply);
-//                } else {
-//                    System.out.println("Unknown Error");
-//                }
-//
-//            } else {
-//                System.out.println("Packet Skipped");
-//            }
-//
-//            debugPacket(packet);
-//
-//            packet.setStatus(STATUS_SENT);
-//            _sending = false;
-//        }
-//
-//        void stop() {
+
+            if ((_node == 0) || (_node == packet.getToNode())) {
+
+                Hashtable xmlpacket = new Hashtable();
+                System.out.println(new String(Base64.encodeBase64(packet.getData())));
+                String packetBase64 = new String(Base64.encodeBase64(packet.getData()));
+                xmlpacket.put("timestamp", getDateAsISO8601String(packet.getTimestamp()));
+                xmlpacket.put("packet", packetBase64);
+                //System.out.println("DAte: "+packet.getTimestamp().toString());
+                String reply = "";
+
+                try {
+                    reply = (String) _client.execute("HomeNet.packet", xmlpacket);
+                    //reply = (String)homeNetXmlrpcClient.execute("HomeNet.ping", "test test3242342");
+                } catch (Exception e) {
+                    System.out.println("XMLRPC Error: " + e);
+                }
+
+                if (reply.equals("true")) {
+                    System.out.println("Packet Successfuly sent to HomeNet.me");
+                } else if (!reply.equals(null)) {
+                    System.out.println("HomeNet.me Error- " + reply);
+                } else {
+                    System.out.println("Unknown Error");
+                }
+
+            } else {
+                System.out.println("Packet Skipped");
+            }
+
+           // debugPacket(packet);
+
+            packet.setStatus(STATUS_SENT);
+            _sending = false;
+        }
+
+        public void stop() {
     }
 //
 
     public void receive(Packet packet) {
-//
-//            //Packet receivingPacket = _homeNet._getNewPacket();
-//            //receivingPacket = packet;
-//            print("Receiving XMLRPC: ");
-//            packet.setFromPort(_id);
-//            packet.received = new Date();
-//            packet.setStatus(STATUS_RECEIVED);
-//            _homeNet.addPacket(packet);
-//            System.out.println("added XMLRPC packet to stack");
-//            _receiving = false;
+
+            //Packet receivingPacket = _homeNet._getNewPacket();
+            //receivingPacket = packet;
+            System.out.println("Receiving XMLRPC: ");
+            packet.setFromPort(_id);
+            packet.received = new Date();
+            packet.setStatus(STATUS_RECEIVED);
+            _homeNet.addPacket(packet);
+            System.out.println("added XMLRPC packet to stack");
+            _receiving = false;
     }
 //
 

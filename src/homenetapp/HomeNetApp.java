@@ -27,7 +27,7 @@ import org.apache.commons.configuration.*;
 public class HomeNetApp {
 
     public HashMap<Integer, String[]> commands;
-    public PropertiesConfiguration config = new PropertiesConfiguration();
+    public PropertiesConfiguration config = null; 
     public homenet.Stack homenet;
     public SerialManager serialmanager;
     private XmlrpcClient _xmlrpcClient;
@@ -78,17 +78,19 @@ public class HomeNetApp {
             _xmlrpcClient = new XmlrpcClient("homenet.me", clientApiKey);
             
             if(serverEnabled == true) {
+                System.out.println("Starting XML RPC Server on port "+serverPort);
                 _xmlrpcServer = new XmlrpcServer(serverPort);
                 XmlrpcCalls calls = new XmlrpcCalls(this);
                 _xmlrpcServer.add("homenet", calls);
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
+            e.printStackTrace();
             loadXmlrpc = false;
         }
 
         if (loadXmlrpc == true) {
-            //   homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
+               homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
         }
         
         upnp = new UPnP();
@@ -115,16 +117,20 @@ public class HomeNetApp {
 //            });
         }
     }
+    
+    
+    
 
     private boolean loadConfig() {
         try {
             config = new PropertiesConfiguration("homenet.properties.txt");
-        } catch (Exception e) {
-            return false;
-        }        
-        
+             
+        if(config.getString("client.server") != null){
+             clientServer = config.getString("client.server");
+        }
+            
         //core settings
-        clientServer = config.getString("client.server");
+       
         clientApiKey = config.getString("client.apikey");
         serverEnabled = config.getBoolean("server.enabled");
         serverUpnpEnabled = config.getBoolean("server.upnp");
@@ -133,12 +139,15 @@ public class HomeNetApp {
         configDone = config.getBoolean("config.done");
         
         portsSerial = config.getList("ports.serial");
-        
+         } catch (Exception e) {
+             config = new PropertiesConfiguration();
+            return false;
+        }  
         return true;
     }
 
     public void saveConfig() throws Exception {
-
+        System.out.println("Saving Config");
         config.setProperty("client.server", clientServer);
         config.setProperty("client.apikey", clientApiKey);
         config.setProperty("server.enabled", serverEnabled);

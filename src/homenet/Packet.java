@@ -135,7 +135,7 @@ public class Packet implements Cloneable {
     }
 
     public int getFromNode() {
-        return (((int) data[PACKET_FROM]) << 4) | (int) (data[PACKET_FROM + 1] >> 4);
+        return (((int) (data[PACKET_FROM]) &0xff ) << 4) | (int) ((data[PACKET_FROM + 1] & 0xff) >> 4);
     }
 
     public int getFromDevice() {
@@ -143,7 +143,7 @@ public class Packet implements Cloneable {
     }
 
     public int getToNode() {
-        return  (((int) data[PACKET_TO] & 0xff) << 4) | ((data[PACKET_TO + 1] & 0xff) >> 4);
+        return  (((int) (data[PACKET_TO] & 0xff) << 4)) | ((data[PACKET_TO + 1] & 0xff) >> 4);
     }
 
     public int getToDevice() {
@@ -179,7 +179,7 @@ public class Packet implements Cloneable {
     }
 
     public int getChecksum() {
-        return (((int) (data[getLength() - OFFSET_FOOTER])) << 8) | (int) data[getLength() - 1];
+        return (((int) (data[getLength() - OFFSET_FOOTER] & 0xff )) << 8) | (data[getLength() - 1] & 0xff);
     }
 
     public Date getTimestamp() {

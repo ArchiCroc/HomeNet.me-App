@@ -168,7 +168,9 @@ public class Stack {
                     packet.setStatus(STATUS_CLEAR);
                 } else if(_ports.size()> 1) {
                     packet.setStatus(STATUS_READY);
+                    break;
                 }
+                System.out.println("Only "+_ports.size()+" port found removing packet");
                 packet.setStatus(STATUS_CLEAR);
                 break;
             case STATUS_WAITING:
