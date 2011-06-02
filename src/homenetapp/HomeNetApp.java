@@ -48,11 +48,15 @@ public class HomeNetApp {
     public int serverPort = 2443;
     public boolean configDone = false;
     
-    public boolean connectOut = false; //is the app have a valid connection to a homenet server?
-    public boolean connectIn = false; //can the homenet server connect to the app?
+    public boolean connectLocalIn = false;
+    public boolean connectLocalOut = false;
     
-    public boolean connectOutValid = true; //is the apikey/permissions valid
-    public boolean connectInValid = true; //is the apikey/permissions valid
+    
+    public boolean connectRemoteOut = false; //is the app have a valid connection to a homenet server?
+    public boolean connectRemoteIn = false; //can the homenet server connect to the app?
+    
+    public boolean connectRemoteValid = false; //is the apikey/permissions valid
+   
     
     List<String> portsSerial = new ArrayList();
     
