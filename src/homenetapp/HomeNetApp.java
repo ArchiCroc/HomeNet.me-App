@@ -81,7 +81,7 @@ public class HomeNetApp {
                 System.out.println("Starting XML RPC Server on port "+serverPort);
                 _xmlrpcServer = new XmlrpcServer(serverPort);
                 XmlrpcCalls calls = new XmlrpcCalls(this);
-                _xmlrpcServer.add("homenet", calls);
+                _xmlrpcServer.add("HomeNet", calls);
             }
         } catch (Exception e) {
             System.err.println(e.getMessage());

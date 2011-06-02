@@ -44,11 +44,11 @@ public String getApikey(){
      return app.config.getString("setting.apikey");
 }
 
-public String packet(Hashtable value){
+public String packet(java.util.Map value){
   return send(value);
 }
 
-public String send(Hashtable value){
+public String send(java.util.Map value){
      //apikeyMsg("Remote Command");
      
      
@@ -63,7 +63,7 @@ public String send(Hashtable value){
      
     // debugPacket(packet);
      try {
-        ((PortXmlrpc)app.homenet.getPort("Xmlrpc")).receive(packet);
+        ((PortXmlrpc)app.homenet.getPort("xmlrpc")).receive(packet);
      } catch (Exception e){
        e.printStackTrace();
       //   return e.toString();

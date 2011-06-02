@@ -34,6 +34,7 @@ import org.apache.xmlrpc.server.*;
 import org.apache.xmlrpc.*;
 import org.apache.xmlrpc.common.*;
 import org.apache.xmlrpc.webserver.*;
+import  org.apache.xmlrpc.metadata.*;
 
 
 import java.util.*;
@@ -45,12 +46,10 @@ public class XmlrpcServer {
     ServletWebServer server;
     PropertyHandlerMapping mapping;
     int port;
-    
+    private  HashMap<String,Object> classes = new HashMap();
     
     public class MyServlet extends XmlRpcServlet {
-          private boolean isAuthenticated(String pUserName, String pPassword) {
-              return "foo".equals(pUserName) && "bar".equals(pPassword);
-          }
+
           protected XmlRpcHandlerMapping newXmlRpcHandlerMapping() throws XmlRpcException {
 //              PropertyHandlerMapping mapping
 //                  = (PropertyHandlerMapping) super.newXmlRpcHandlerMapping();
@@ -65,7 +64,8 @@ public class XmlrpcServer {
 //                  };
 //              mapping.setAuthenticationHandler(handler);
 //              return mapping;
-              mapping = new PropertyHandlerMapping();
+            // mapping = (PropertyHandlerMapping) newXmlRpcHandlerMapping();
+             mapping = new PropertyHandlerMapping();
 
       mapping.setRequestProcessorFactoryFactory(new myRequestProcessorFactoryFactory());
       mapping.setVoidMethodEnabled(true);
@@ -76,8 +76,14 @@ public class XmlrpcServer {
       //XmlRpcServerConfigImpl serverConfig = (XmlRpcServerConfigImpl) xmlRpcServer.getConfig();
      // serverConfig.setEnabledForExtensions(true);
      // serverConfig.setContentLengthOptional(false);
+      
+        final XmlRpcSystemImpl systemHandler = new XmlRpcSystemImpl(mapping);
+
+        add("system", systemHandler);
+      
+      
               
-              
+          //   org.apache.xmlrpc.metadata.XmlRpcSystemImpl.addSystemHandler(mapping);
               
               return mapping;
           }
@@ -85,14 +91,14 @@ public class XmlrpcServer {
     public class myRequestProcessorFactoryFactory implements RequestProcessorFactoryFactory {
 
         private final RequestProcessorFactory factory = new myRequestProcessorFactory();
-        private  HashMap<java.lang.Class,Object> classes = new HashMap();
+        
 
         public myRequestProcessorFactoryFactory() {
             
         }
         
-        public void addObject(Object object){
-            this.classes.put(object.getClass(), object);
+        public void addObject(String name,Object object){
+            classes.put(name, object);
         }
 
         public RequestProcessorFactory getRequestProcessorFactory(Class aClass) throws XmlRpcException {
@@ -102,8 +108,11 @@ public class XmlrpcServer {
         private class myRequestProcessorFactory implements RequestProcessorFactory {
 
             public Object getRequestProcessor(XmlRpcRequest xmlRpcRequest) throws XmlRpcException {
-              //  xmlRpcRequest.getClass();   
-                return classes.get(xmlRpcRequest.getClass());
+             System.out.println("XML Server calling "+  classes.size()); 
+             // return new Object();
+               // System.out.println("method requested: "+);
+              //  xmlRpcRequest.getConfig().
+                return classes.get(xmlRpcRequest.getMethodName().substring(0,xmlRpcRequest.getMethodName().indexOf(".")));
             }
         }
     }
@@ -133,6 +142,10 @@ public class XmlrpcServer {
 //            serverConfig.setEnabledForExtensions(true);
 //           serverConfig.setContentLengthOptional(false);
 //server.
+    //    object o = new org.apache.xmlrpc.metadata.XmlRpcSystemImpl();
+        
+ 
+        
        server.start();
         System.out.println("Starting XMLRPC Server");
 
@@ -142,12 +155,14 @@ public class XmlrpcServer {
      * Add an object to the server.
      */
     public void add(String name, Object object) {
+        System.err.println("Adding Handler: " + name);
         try {
-            ((myRequestProcessorFactoryFactory)mapping.getRequestProcessorFactoryFactory()).addObject(object);
+         ((myRequestProcessorFactoryFactory)mapping.getRequestProcessorFactoryFactory()).addObject(name, object);
             mapping.addHandler(name, object.getClass());
           //  server.start();
-        } catch (Exception exception) {
-            System.err.println("JavaServer: " + exception.toString());
+        } catch (Exception e) {
+            System.err.println("JavaServer: " + e.toString());
+            e.printStackTrace();
         }
     }
 
