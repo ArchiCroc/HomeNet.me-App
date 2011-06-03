@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2011 Matthew Doll <mdoll at homenet.me>.
+ *
+ * This file is part of HomeNet.
+ *
+ * HomeNet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * HomeNet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with HomeNet.  If not, see <http://www.gnu.org/licenses/>.
  */
 package homenet;
 
@@ -29,7 +43,8 @@ public class Stack {
     private ProcessThread _processThread; 
     
     
-    private ArrayList<Listener> _listeners = new ArrayList();
+    private ArrayList<PacketListener> _packetListeners = new ArrayList();
+    public ArrayList<PortListener> _portListeners = new ArrayList();
 
     public Stack(int id) {
         _nodeId = id;
@@ -38,17 +53,27 @@ public class Stack {
         _processThread.start();
     }
     
-    public void addListener(Listener listener){
-        _listeners.add(listener);
+    public void addPacketListener(PacketListener listener){
+        _packetListeners.add(listener);
+    }
+    
+    public void addPortListener(PortListener listener){
+        _portListeners.add(listener);
     }
 
     public void addPort(String name, Port port) {
         _ports.put(name, port);
         port.init(name);
+        for(PortListener l : _portListeners){
+            l.portAdded(name);
+        }
     }
 
     public void removePort(String name) {
         _ports.remove(name);
+        for(PortListener l : _portListeners){
+            l.portRemoved(name);
+        }
     }
 
     public HashMap getPorts() {
@@ -156,7 +181,7 @@ public class Stack {
             //    System.out.println("Packet Status: Received");
                 //debugPacket(packet);
                 //process Listeners
-                for(Listener l : _listeners){
+                for(PacketListener l : _packetListeners){
                     l.packetRecieved(packet);
                 }
                 

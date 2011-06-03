@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2011 Matthew Doll <mdoll at homenet.me>.
+ *
+ * This file is part of HomeNet.
+ *
+ * HomeNet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * HomeNet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with HomeNet.  If not, see <http://www.gnu.org/licenses/>.
  */
 package homenetapp;
 
@@ -30,9 +44,9 @@ public class HomeNetApp {
     public PropertiesConfiguration config = null; 
     public homenet.Stack homenet;
     public SerialManager serialmanager;
-    private XmlrpcClient _xmlrpcClient;
-    private XmlrpcServer _xmlrpcServer;
-    private UPnP upnp;
+    private XmlrpcClient _xmlrpcClient = null;
+    private XmlrpcServer _xmlrpcServer = null;
+    private UPnP upnp = new UPnP();
     //core settings
     
     final public String version = "0.0.1";
@@ -67,7 +81,7 @@ public class HomeNetApp {
         loadCommands();
     }
 
-    public void start() {
+    public void start() throws Exception {
 
         homenet = new homenet.Stack(0xff);
         homenet.init();
@@ -75,51 +89,75 @@ public class HomeNetApp {
         // HashMap<String,Port> ports = new HashMap<String,Port>();
         //  HashMap<Integer,Device> devices = new HashMap<Integer,Device>();
         serialmanager = new SerialManager(homenet);
-
-        boolean loadXmlrpc = true;
-
-        try {
-            _xmlrpcClient = new XmlrpcClient("homenet.me", clientApiKey);
-            
-            if(serverEnabled == true) {
-                System.out.println("Starting XML RPC Server on port "+serverPort);
-                _xmlrpcServer = new XmlrpcServer(serverPort);
-                XmlrpcCalls calls = new XmlrpcCalls(this);
-                _xmlrpcServer.add("HomeNet", calls);
+        
+        //start client
+         startClient();
+         
+        //start server
+        if(serverEnabled == true){
+          
+            startServer();
+           
+            if(serverUpnpEnabled == true){
+               startUpnp();
             }
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-            loadXmlrpc = false;
         }
 
-        if (loadXmlrpc == true) {
-               homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
+    }
+    
+    public void startServer() throws Exception {
+        System.out.println("Starting XML RPC Server on port " + serverPort);
+        _xmlrpcServer = new XmlrpcServer(serverPort);
+        XmlrpcCalls calls = new XmlrpcCalls(this);
+        _xmlrpcServer.add("HomeNet", calls);
+
+
+    }
+    
+    public void stopServer(){
+        System.out.println("Stopping XML RPC Server on port " + serverPort);
+        if(_xmlrpcServer != null){
+            _xmlrpcServer.stop();
+            _xmlrpcServer = null;
+        }
+    }
+    
+    public void startClient() throws Exception{
+        System.out.println("Starting XML RPC Client to " + clientServer );
+        System.out.println("    with Api Key: " + clientApiKey );
+        _xmlrpcClient = new XmlrpcClient(clientServer, clientApiKey);
+        
+        String reply = (String)_xmlrpcClient.execute("HomeNet.validateApikey", clientApiKey);
+        
+        if(!reply.equals("true")){
+            throw new Exception("Invalid API Key");
         }
         
-        upnp = new UPnP();
-        
-        if((serverEnabled == true) && (serverUpnpEnabled == true)) {
-            System.out.println("IP Address: " + upnp.getIpAddress());
+       // boolean loadXmlrpc = true;
+        homenet.addPort("xmlrpc", new PortXmlrpc(homenet,_xmlrpcClient));
 
-            //start this in it's own thread since it takes a while
-            
-            
-            Thread runUpnp = new Thread() {
+    }
+    
+    public void stopClient(){
+        System.out.println("Stopping XML RPC Client");
+         homenet.removePort("xmlrpc");
+        _xmlrpcClient = null;
+    }
+    
+    public void startUpnp(){
+        System.out.println("Starting UPnP port forwarding for port " + serverPort);
+        Thread runUpnp = new Thread() {
               public void run(){
                   upnp = new UPnP();
-                  upnp.forwardPort(2443);
+                  upnp.forwardPort(serverPort);
               }  
             };
             runUpnp.start();
-            
-//            java.awt.EventQueue.invokeLater(new Runnable() {
-//                public void run() {
-//                    upnp = new UPnP();
-//                    upnp.forwardPort(2443);
-//                }
-//            });
-        }
+    }
+    
+    public void stopUpnp(){
+        System.out.println("Stopping UPnP port forwarding for port " + upnp.port);
+        upnp.exit();
     }
     
     
@@ -163,6 +201,9 @@ public class HomeNetApp {
     }
 
     private void loadCommands() {
+        
+        getAppPath("commands.txt");
+        
         commands = new HashMap<Integer, String[]>();
 
         String[] strings = loadStrings("commands.txt");
@@ -185,6 +226,8 @@ public class HomeNetApp {
 
         //System.out.println(commands.keySet().size());
         // System.out.println("Size: "+commands.size());
+        
+        
 
         Object[] rows = commands.keySet().toArray();
         Arrays.sort(rows, new compareCommands());
@@ -202,8 +245,11 @@ public class HomeNetApp {
     public String getAppPath(String filename) {
         //@todo find the right path
         String path = HomeNetApp.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        //System.out.println(path + filename);
-        return path + filename;
+        path = path.replaceAll("%20", " ");
+        path = path.substring(0,path.lastIndexOf("/"));
+        
+        System.err.println(path + "/"+ filename);
+        return path +"/"+ filename;
         //return "C:\\Users\\mdoll\\Documents\\NetBeansProjects\\HomeNet.me-App\\" + filename;
         // return "C:\\Projects (Safe)\\HomeNet.me-App\\" + filename;
     }
@@ -214,7 +260,7 @@ public class HomeNetApp {
             saveConfig();
         } catch (Exception e) {
         }
-        upnp.exit();
+        
     }
 
     class SerialManager {
@@ -420,89 +466,96 @@ public class HomeNetApp {
 
         // safe to check for this as a url first. this will prevent online
         // access logs from being spammed with GET /sketchfolder/http://blahblah
-        if (filename.indexOf(":") != -1) {  // at least smells like URL
-            try {
-                URL url = new URL(filename);
-                stream = url.openStream();
-                return stream;
-
-            } catch (MalformedURLException mfue) {
-                // not a url, that's fine
-            } catch (FileNotFoundException fnfe) {
-                // Java 1.5 likes to throw this when URL not available. (fix for 0119)
-                // http://dev.processing.org/bugs/show_bug.cgi?id=403
-            } catch (IOException e) {
-                // changed for 0117, shouldn't be throwing exception
-                e.printStackTrace();
-                //System.err.println("Error downloading from URL " + filename);
-                return null;
-                //throw new RuntimeException("Error downloading from URL " + filename);
-            }
-        }
-
-        // Moved this earlier than the getResourceAsStream() checks, because
-        // calling getResourceAsStream() on a directory lists its contents.
-        // http://dev.processing.org/bugs/show_bug.cgi?id=716
-        try {
-            // First see if it's in a data folder. This may fail by throwing
-            // a SecurityException. If so, this whole block will be skipped.
-            File file = new File(getAppPath(filename));
-
-            if (file.isDirectory()) {
-                return null;
-            }
-            if (file.exists()) {
-                try {
-                    // handle case sensitivity check
-                    String filePath = file.getCanonicalPath();
-                    String filenameActual = new File(filePath).getName();
-                    // make sure there isn't a subfolder prepended to the name
-                    String filenameShort = new File(filename).getName();
-                    // if the actual filename is the same, but capitalized
-                    // differently, warn the user.
-                    //if (filenameActual.equalsIgnoreCase(filenameShort) &&
-                    //!filenameActual.equals(filenameShort)) {
-                    if (!filenameActual.equals(filenameShort)) {
-                        throw new RuntimeException("This file is named "
-                                + filenameActual + " not "
-                                + filename + ". Rename the file "
-                                + "or change your code.");
-                    }
-                } catch (IOException e) {
-                }
-            }
-
-            // if this file is ok, may as well just load it
-            stream = new FileInputStream(file);
-            if (stream != null) {
-                return stream;
-            }
-
-            // have to break these out because a general Exception might
-            // catch the RuntimeException being thrown above
-        } catch (IOException ioe) {
-        } catch (SecurityException se) {
-        }
+//        if (filename.indexOf(":") != -1) {  // at least smells like URL
+//            try {
+//                URL url = new URL(filename);
+//                stream = url.openStream();
+//                return stream;
+//
+//            } catch (MalformedURLException mfue) {
+//                // not a url, that's fine
+//            } catch (FileNotFoundException fnfe) {
+//                // Java 1.5 likes to throw this when URL not available. (fix for 0119)
+//                // http://dev.processing.org/bugs/show_bug.cgi?id=403
+//            } catch (IOException e) {
+//                // changed for 0117, shouldn't be throwing exception
+//                e.printStackTrace();
+//                //System.err.println("Error downloading from URL " + filename);
+//                return null;
+//                //throw new RuntimeException("Error downloading from URL " + filename);
+//            }
+//        }
+//
+//        // Moved this earlier than the getResourceAsStream() checks, because
+//        // calling getResourceAsStream() on a directory lists its contents.
+//        // http://dev.processing.org/bugs/show_bug.cgi?id=716
+//        try {
+//            // First see if it's in a data folder. This may fail by throwing
+//            // a SecurityException. If so, this whole block will be skipped.
+//            System.err.println("Load file");
+//            File file = new File(getAppPath(filename));
+//
+//            if (file.isDirectory()) {
+//                return null;
+//            }
+//            if (file.exists()) {
+//                try {
+//                    // handle case sensitivity check
+//                    
+//                    String filePath = file.getCanonicalPath();
+//                    System.err.println("file path: Load file"+filePath);
+//
+//                    String filenameActual = new File(filePath).getName();
+//                    // make sure there isn't a subfolder prepended to the name
+//                    String filenameShort = new File(filename).getName();
+//                    // if the actual filename is the same, but capitalized
+//                    // differently, warn the user.
+//                    //if (filenameActual.equalsIgnoreCase(filenameShort) &&
+//                    //!filenameActual.equals(filenameShort)) {
+//                    if (!filenameActual.equals(filenameShort)) {
+//                        throw new RuntimeException("This file is named "
+//                                + filenameActual + " not "
+//                                + filename + ". Rename the file "
+//                                + "or change your code.");
+//                    }
+//                } catch (IOException e) {
+//                }
+//            }
+//
+//            // if this file is ok, may as well just load it
+//            stream = new FileInputStream(file);
+//            if (stream != null) {
+//                return stream;
+//            }
+//
+//            // have to break these out because a general Exception might
+//            // catch the RuntimeException being thrown above
+//        } catch (IOException ioe) {
+//            System.err.println("File IO Error");
+//            ioe.printStackTrace();
+//        } catch (SecurityException se) {
+//            System.err.println("File Security Error");
+//        }
 
         // Using getClassLoader() prevents java from converting dots
         // to slashes or requiring a slash at the beginning.
         // (a slash as a prefix means that it'll load from the root of
         // the jar, rather than trying to dig into the package location)
         ClassLoader cl = getClass().getClassLoader();
-
-        // by default, data files are exported to the root path of the jar.
-        // (not the data folder) so check there first.
-        stream = cl.getResourceAsStream("data/" + filename);
-        if (stream != null) {
-            String cn = stream.getClass().getName();
-            // this is an irritation of sun's java plug-in, which will return
-            // a non-null stream for an object that doesn't exist. like all good
-            // things, this is probably introduced in java 1.5. awesome!
-            // http://dev.processing.org/bugs/show_bug.cgi?id=359
-            if (!cn.equals("sun.plugin.cache.EmptyInputStream")) {
-                return stream;
-            }
-        }
+//
+//        // by default, data files are exported to the root path of the jar.
+//        // (not the data folder) so check there first.
+//        stream = cl.getResourceAsStream(filename);
+//        if (stream != null) {
+//            String cn = stream.getClass().getName();
+//            // this is an irritation of sun's java plug-in, which will return
+//            // a non-null stream for an object that doesn't exist. like all good
+//            // things, this is probably introduced in java 1.5. awesome!
+//            // http://dev.processing.org/bugs/show_bug.cgi?id=359
+//            if (!cn.equals("sun.plugin.cache.EmptyInputStream")) {
+//                return stream;
+//            }
+//        }
 
         // When used with an online script, also need to check without the
         // data folder, in case it's not in a subfolder called 'data'.

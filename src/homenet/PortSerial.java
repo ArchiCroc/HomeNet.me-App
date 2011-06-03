@@ -1,6 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2011 Matthew Doll <mdoll at homenet.me>.
+ *
+ * This file is part of HomeNet.
+ *
+ * HomeNet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * HomeNet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with HomeNet.  If not, see <http://www.gnu.org/licenses/>.
  */
 package homenet;
 
@@ -53,6 +67,9 @@ public class PortSerial extends Port {
         _sendingPacket = packet;
 
         System.out.print("Sending: ");
+        for(PortListener l : _homeNet._portListeners){
+            l.portSendingStart(_id);
+        }
         for (int i = 0; i < packet.getLength(); i++) {
             System.out.print((int) packet.data[i] + ",");
             try {
@@ -62,11 +79,17 @@ public class PortSerial extends Port {
                 stop();
                 _homeNet.removePort(getId());
                 packet.setStatus(STATUS_FAILED);
+                for(PortListener l : _homeNet._portListeners){
+            l.portSendingEnd(_id);
+        }
                 return;
             }
         }
         System.out.println("");
         packet.setStatus(STATUS_SENT);
+         for(PortListener l : _homeNet._portListeners){
+            l.portSendingEnd(_id);
+        }
     }
 
     @Override
@@ -128,7 +151,9 @@ public class PortSerial extends Port {
                     return;
                 }
 
-
+ for(PortListener l : _homeNet._portListeners){
+            l.portReceivingStart(_id);
+        }
                 _receiving = true;
                 _receivingTimer = System.currentTimeMillis();
                 _receivingPacket = _homeNet.getNewPacket();
@@ -149,7 +174,9 @@ public class PortSerial extends Port {
             System.out.println("Recieving Packet Timed Out");
             _receivingPacket.setStatus(STATUS_CLEAR);
             _receiving = false;
-
+            for(PortListener l : _homeNet._portListeners){
+            l.portReceivingEnd(_id);
+        }
             //Serial.flush();
             write(0); //tell the node to resend last
         }
@@ -203,6 +230,9 @@ public class PortSerial extends Port {
             //reset incomingPacket
         }
         //*/
+        for(PortListener l : _homeNet._portListeners){
+            l.portReceivingEnd(_id);
+        }
         _receiving = false;
         _ptr = 0;
     }

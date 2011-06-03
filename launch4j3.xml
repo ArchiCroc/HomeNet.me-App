@@ -1,0 +1,39 @@
+<launch4jConfig>
+  <dontWrapJar>true</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>HomeNetApp.jar</jar>
+  <outfile>C:\Projects (Safe)\HomeNet.me-App\dist\HomeNetApp.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir></chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <customProcName>false</customProcName>
+  <stayAlive>false</stayAlive>
+  <manifest></manifest>
+  <icon></icon>
+  <singleInstance>
+    <mutexName>HomeNetAppMUTEX</mutexName>
+    <windowTitle></windowTitle>
+  </singleInstance>
+  <jre>
+    <path></path>
+    <minVersion>1.6.0</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <opt>-Djava.library.path=./lib</opt>
+  </jre>
+  <versionInfo>
+    <fileVersion>0.0.1.0</fileVersion>
+    <txtFileVersion>0.0.1.0 Alpha</txtFileVersion>
+    <fileDescription>HomeNetApp</fileDescription>
+    <copyright>2011 Matthew Doll</copyright>
+    <productVersion>0.0.1.0</productVersion>
+    <txtProductVersion>0.0.1.0 Alpha</txtProductVersion>
+    <productName>HomeNetApp</productName>
+    <companyName>HomeNet.me</companyName>
+    <internalName>HomeNetApp-Java</internalName>
+    <originalFilename>HomeNetApp.exe</originalFilename>
+  </versionInfo>
+</launch4jConfig>

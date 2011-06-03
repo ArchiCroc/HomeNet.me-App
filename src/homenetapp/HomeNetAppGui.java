@@ -1,13 +1,33 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2011 Matthew Doll <mdoll at homenet.me>.
+ *
+ * This file is part of HomeNet.
+ *
+ * HomeNet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * HomeNet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with HomeNet.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * HomeNetAppGui.java
- *
- * Created on May 11, 2011, 3:14:05 PM
- */
+
+
+
+//Error 0x5 at /home/bob/foo/rxtx-devel/build/../src/termios.Exception in thread "Thread-6" java.util.ConcurrentModificationException
+//	at java.util.AbstractList$Itr.checkForComodification(AbstractList.java:372)
+//	at java.util.AbstractList$Itr.next(AbstractList.java:343)
+//	at homenetapp.HomeNetApp$SerialManager.checkSerialPorts(HomeNetApp.java:338)
+//	at homenetapp.HomeNetApp$SerialManager$SerialCheckThread.run(HomeNetApp.java:406)
+//c(482): Access is denied.
+
+
 package homenetapp;
 
 import java.util.*;
@@ -104,6 +124,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             homenetapp.start();
         } catch (Exception e) {
             //show popup and exit program
+            javax.swing.JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
             System.err.println(e.getMessage());
         }
 
@@ -118,7 +139,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         loadSettings();
         SendPacketFrame.setLocationRelativeTo(null);
 
-        homenetapp.homenet.addListener(new homenet.Listener() {
+        homenetapp.homenet.addPacketListener(new homenet.PacketListener() {
 
             public void packetRecieved(homenet.Packet packet) {
                 addPacketToList(packet);
@@ -168,7 +189,114 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 menuItems.get(name).setSelected(false);
             }
         });
+        
+         homenetapp.homenet.addPortListener(new homenet.PortListener() {
+        
+            ArrayList<String> local = new ArrayList(); 
+            ArrayList<String> remote = new ArrayList(); 
+            
+            private boolean isRemote(String port){
+                return port.equals("xmlrpc");
+            }
+             
+            public void portAdded(String port) {
+                System.out.println("portAddedEvent");
+                if(isRemote(port)){
+                    remote.add(port);
+                    remoteStatusLabel.setText("Connected");
+                } else {
+                    local.add(port);
+                    localStatusLabel.setText("Connected");
+                }
+            }
 
+            public void portRemoved(String port) {
+                System.out.println("portRemovedEvent");
+                if(isRemote(port)){
+                    remote.remove(port);
+                    if(remote.size() < 1){
+                        remoteStatusLabel.setText("Not Connected");
+                    }
+                } else {
+                    local.remove(port);
+                    if(local.size() < 1){
+                        localStatusLabel.setText("Not Connected");
+                    }
+                }
+            }
+
+            public void portSendingStart(String port) {
+                System.out.println("portSendingStartEvent");
+                if(isRemote(port)){
+                    remoteSendingLabel.setText("(X)");
+                } else {
+                    localSendingLabel.setText("(X)");
+                }
+            }
+
+            public void portSendingEnd(String port) {
+                System.out.println("portSendingEndEvent");
+                if(isRemote(port)){
+                    Thread delayThread = new Thread() {
+                        public void run() {
+                            try {
+                                Thread.sleep(500);
+                            } catch (Exception e) { }
+                            remoteSendingLabel.setText("( )");
+                        }
+                    };
+                    delayThread.start();
+                    
+                } else {
+                                        Thread delayThread = new Thread() {
+                        public void run() {
+                            try {
+                                Thread.sleep(500);
+                            } catch (Exception e) { }
+                            localSendingLabel.setText("( )");
+                        }
+                    };
+                    delayThread.start();
+                    
+                }
+            }
+
+            public void portReceivingStart(String port) {
+                System.out.println("portRecievingStartEvent");
+                if(isRemote(port)){
+                    remoteReceivingLabel.setText("(X)");
+                } else {
+                    localReceivingLabel.setText("(X)");
+                }
+            }
+
+            public void portReceivingEnd(String port) {
+                System.out.println("portRecievingEndEvent");
+              if(isRemote(port)){
+                    Thread delayThread = new Thread() {
+                        public void run() {
+                            try {
+                                Thread.sleep(500);
+                            } catch (Exception e) { }
+                            remoteReceivingLabel.setText("( )");
+                        }
+                    };
+                    delayThread.start();
+                    
+                } else {
+                                        Thread delayThread = new Thread() {
+                        public void run() {
+                            try {
+                                Thread.sleep(500);
+                            } catch (Exception e) { }
+                            localReceivingLabel.setText("( )");
+                        }
+                    };
+                    delayThread.start();
+                    
+                }
+            }
+        });
 
         homenetapp.serialmanager.start();
     }
@@ -199,15 +327,13 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             packetCommand = homenetapp.config.getInt("packet.command");
             packetPayload = homenetapp.config.getString("packet.payload");
         } catch (Exception e) {
-            e.printStackTrace();
+           // e.printStackTrace();
         }
     }
 
     public void saveConfig() {
         //save properties
         //page1
-
-
         homenetapp.config.setProperty("packet.tonode", packetToNode);
         homenetapp.config.setProperty("packet.todevice", packetToDevice);
         homenetapp.config.setProperty("packet.fromnode", packetFromNode);
@@ -236,9 +362,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             serverPortLabel.setEnabled(false);
             serverPortTextField.setEnabled(false);
         }
-
-        //send packet
-
     }
 
     /** This method is called from within the constructor to
@@ -276,6 +399,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         testButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         certPropertiesLabel = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         serverPortLabel = new javax.swing.JLabel();
         serverPortTextField = new javax.swing.JTextField();
@@ -302,7 +426,13 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         consoleTextPane = new javax.swing.JTextPane();
         statusPanel = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
+        localStatusLabel = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        remoteStatusLabel = new javax.swing.JLabel();
+        localSendingLabel = new javax.swing.JLabel();
+        localReceivingLabel = new javax.swing.JLabel();
+        remoteSendingLabel = new javax.swing.JLabel();
+        remoteReceivingLabel = new javax.swing.JLabel();
         topMenuBar = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
@@ -461,6 +591,13 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         certPropertiesLabel.setText("Loading...");
 
+        jButton1.setText("Paste");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -475,9 +612,11 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
-                        .addComponent(certPropertiesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(testButton))
+                        .addComponent(certPropertiesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 182, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(testButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1))
                     .addComponent(apiKeyTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE)
                     .addComponent(serverTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 304, Short.MAX_VALUE))
                 .addContainerGap())
@@ -495,9 +634,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                     .addComponent(apiKeyLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(testButton)
                     .addComponent(jLabel1)
-                    .addComponent(certPropertiesLabel))
+                    .addComponent(certPropertiesLabel)
+                    .addComponent(testButton)
+                    .addComponent(jButton1))
                 .addContainerGap(81, Short.MAX_VALUE))
         );
 
@@ -622,7 +762,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         jLabel9.setText("Packets Received:");
 
         packetTextArea.setColumns(20);
-        packetTextArea.setFont(new java.awt.Font("Courier New", 0, 12)); // NOI18N
+        packetTextArea.setFont(new java.awt.Font("Courier New", 0, 12));
         packetTextArea.setRows(5);
         jScrollPane2.setViewportView(packetTextArea);
 
@@ -677,7 +817,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         consoleTextPane.setBackground(new java.awt.Color(0, 0, 0));
         consoleTextPane.setEditable(false);
-        consoleTextPane.setFont(new java.awt.Font("Consolas", 0, 10)); // NOI18N
+        consoleTextPane.setFont(new java.awt.Font("Consolas", 0, 10));
         consoleTextPane.setForeground(new java.awt.Color(255, 255, 255));
         jScrollPane1.setViewportView(consoleTextPane);
 
@@ -703,9 +843,25 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         statusPanel.setBackground(new java.awt.Color(204, 204, 204));
         statusPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 
-        jLabel7.setText("Status:");
+        jLabel7.setText("Local:");
 
-        jLabel8.setText("Connected");
+        localStatusLabel.setText("Connected");
+
+        jLabel11.setText("Remote:");
+
+        remoteStatusLabel.setText("Connected");
+
+        localSendingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        localSendingLabel.setText("( )");
+
+        localReceivingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        localReceivingLabel.setText("( )");
+
+        remoteSendingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        remoteSendingLabel.setText("( )");
+
+        remoteReceivingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        remoteReceivingLabel.setText("( )");
 
         javax.swing.GroupLayout statusPanelLayout = new javax.swing.GroupLayout(statusPanel);
         statusPanel.setLayout(statusPanelLayout);
@@ -715,14 +871,32 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel8)
-                .addContainerGap(427, Short.MAX_VALUE))
+                .addComponent(localStatusLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(localSendingLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(localReceivingLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 217, Short.MAX_VALUE)
+                .addComponent(jLabel11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(remoteStatusLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(remoteSendingLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(remoteReceivingLabel)
+                .addContainerGap())
         );
         statusPanelLayout.setVerticalGroup(
             statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jLabel8))
+                .addComponent(localStatusLabel)
+                .addComponent(localSendingLabel)
+                .addComponent(localReceivingLabel)
+                .addComponent(remoteSendingLabel)
+                .addComponent(remoteReceivingLabel)
+                .addComponent(remoteStatusLabel)
+                .addComponent(jLabel11))
         );
 
         mainPanel.add(statusPanel);
@@ -839,13 +1013,6 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     private void sendPacketButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendPacketButtonActionPerformed
 
-        // homenetapp.homenet.addUdpPacket((int) fromDeviceSpinner.getValue(), (int) toNodeSpinner.getValue(), 
-        //         (int) toDeviceSpinner.getValue(), 2, new Payload("test"));
-
-        //   int fromDevice = ;
-
-
-
         packetToNode = (Integer) toNodeSpinner.getValue();
         packetToDevice = (Integer) toDeviceSpinner.getValue();
         packetFromNode = (Integer) fromNodeSpinner.getValue();
@@ -853,14 +1020,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         packetCommand = commandComboBox.getSelectedIndex();
         packetPayload = payloadTextField.getText();
 
-
-
-
         homenet.Packet p = homenetapp.homenet.addUdpPacket(packetFromDevice, packetToNode,
                 packetToDevice, (Integer) commandComboBox.getSelectedItem(), new homenet.Payload(packetPayload));
-
-    //    displayPacket(p);
-
+        
+        p.fromPort = "xmlrpc";
 
     }//GEN-LAST:event_sendPacketButtonActionPerformed
 
@@ -918,18 +1081,68 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     }//GEN-LAST:event_menuToolsSettingsActionPerformed
 
     private void settingsSaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_settingsSaveButtonActionPerformed
-       
-        //detect changes
+
+        //check to see if client settings changed
+        if(!homenetapp.clientServer.equals(serverTextField.getText()) 
+                || !homenetapp.clientApiKey.equals(apiKeyTextField.getText())){
+            //client changed
+            homenetapp.stopClient();
+            
+            homenetapp.clientServer = serverTextField.getText();
+            homenetapp.clientApiKey = apiKeyTextField.getText();
+        try {
+        homenetapp.startClient();
+        } catch(Exception e){
+            System.out.println("Error "+e.getMessage());
+            javax.swing.JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+            
+        }
         
-        homenetapp.clientServer = serverTextField.getText();
-        homenetapp.clientApiKey = apiKeyTextField.getText();
+        boolean portChanged = (homenetapp.serverPort != Integer.parseInt(serverPortTextField.getText()));
+        boolean serverChanged = (homenetapp.serverEnabled != enableServerCheckBox.isSelected()) ;
+        boolean upnpChanged = (homenetapp.serverUpnpEnabled != enableUPnPCheckBox.isSelected()) ;
+        
+         
         homenetapp.serverEnabled = enableServerCheckBox.isSelected();
         homenetapp.serverUpnpEnabled = enableUPnPCheckBox.isSelected();
         homenetapp.serverPort = Integer.parseInt(serverPortTextField.getText());
-                
         
-        
-        //alert to reboot app
+        //do we need to stop the server
+         if(serverChanged || portChanged){
+            homenetapp.stopServer();
+         }
+         
+         //do we need to unmap the upnp port- port changed or was upnp turned off
+         if((upnpChanged && (homenetapp.serverUpnpEnabled == false)) 
+                 || (portChanged && homenetapp.serverEnabled == true)
+                 || (serverChanged && homenetapp.serverEnabled == false)){
+             
+                homenetapp.stopUpnp();
+                 
+             }
+
+        //do we need to restart the server
+         if((serverChanged || portChanged) && homenetapp.serverEnabled){
+            //server changed
+            try{
+                homenetapp.startServer();
+            } catch(Exception e){
+                System.out.println("Error "+e.getMessage());
+                javax.swing.JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+           
+            
+         }
+         
+         //do we need to remap the port via upnp
+         if(((serverChanged && (homenetapp.serverEnabled == true)) || portChanged || upnpChanged) && (homenetapp.serverUpnpEnabled == true)){
+                homenetapp.startUpnp();
+         }
+
         saveConfig();
         SettingsDialog.setVisible(false);
     }//GEN-LAST:event_settingsSaveButtonActionPerformed
@@ -956,11 +1169,14 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 try {
                     //
 
-                    XmlrpcClient xmlrpcClient = new XmlrpcClient("homenet.me", apiKeyTextField.getText());
+                    XmlrpcClient xmlrpcClient = new XmlrpcClient(serverTextField.getText(), apiKeyTextField.getText());
                     String reply = (String) xmlrpcClient.execute("HomeNet.validateApikey", apiKeyTextField.getText());
 
                     if (!reply.equals("true")) {
                         JOptionPane.showMessageDialog(null, reply, "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Successfuly connected to "+serverTextField.getText(), "Success", JOptionPane.INFORMATION_MESSAGE);
                         return;
                     }
 
@@ -998,8 +1214,8 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                     //if(URLConnection.class.getName() == )
                     //conn.
                 } catch (Exception e) {
-
-                    certPropertiesLabel.setText("Invalid Server");
+                    JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                   // certPropertiesLabel.setText("Invalid Server");
                     // System.out.println(e.getMessage());
                     e.printStackTrace();
                 }
@@ -1052,6 +1268,11 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         commandComboBox.setSelectedIndex(packetCommand);
         payloadTextField.setText(packetPayload);
     }//GEN-LAST:event_SendPacketFrameWindowOpened
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        apiKeyTextField.setText("");
+        apiKeyTextField.paste();
+}//GEN-LAST:event_jButton1ActionPerformed
 
     class CommandRenderer extends BasicComboBoxRenderer {
 
@@ -1196,10 +1417,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         public java.awt.Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            System.out.println("PacketListRenderer");
+           // System.out.println("PacketListRenderer");
             if (value != null) {
                 homenet.Packet p = (homenet.Packet) value;
-                setText(p.getFromPort() + "->" + p.getToPort() + " " + p.getFromNode() + ":" + p.getFromDevice() + ">" + p.getToNode() + ":" + p.getToDevice() + " " + p.getId());
+                setText(p.getFromPort() + ">" + p.getToPort() + " " + p.getFromNode() + ":" + p.getFromDevice() + ">" + p.getToNode() + ":" + p.getToDevice() + " " + p.getId());
                 return this;
             }
 
@@ -1254,7 +1475,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
     private void checkClientCert() {
         try {
-            URL url = new URL("https://mail.google.com/");
+            URL url = new URL("https://"+homenetapp.clientServer+"/");
             HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
             conn.connect();
             Certificate[] certs = conn.getServerCertificates();
@@ -1278,7 +1499,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             System.out.println("getSigAlgName: " + xc.getSigAlgName());
 
         } catch (Exception e) {
-            certPropertiesLabel.setText("Failed Load Certficate");
+            certPropertiesLabel.setText("Failed to load certficate");
         }
 
     }
@@ -1315,9 +1536,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JSpinner fromDeviceSpinner;
     private javax.swing.JLabel fromNodeLabel;
     private javax.swing.JSpinner fromNodeSpinner;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JList jList1;
     private javax.swing.JMenuItem jMenuItem3;
@@ -1334,6 +1556,9 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel localReceivingLabel;
+    private javax.swing.JLabel localSendingLabel;
+    private javax.swing.JLabel localStatusLabel;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuHelp;
@@ -1346,6 +1571,9 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     private javax.swing.JTextArea packetTextArea;
     private javax.swing.JLabel payloadLabel;
     private javax.swing.JTextField payloadTextField;
+    private javax.swing.JLabel remoteReceivingLabel;
+    private javax.swing.JLabel remoteSendingLabel;
+    private javax.swing.JLabel remoteStatusLabel;
     private javax.swing.JButton sendPacketButton;
     private javax.swing.JLabel serverLabel;
     private javax.swing.JLabel serverPortLabel;

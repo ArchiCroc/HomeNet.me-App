@@ -24,8 +24,8 @@ package homenet;
  *
  * @author Matthew Doll <mdoll at homenet.me>
  */
-public class Listener {
-    public Listener(){
+public class PacketListener {
+    public PacketListener(){
         
     }
     

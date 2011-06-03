@@ -280,9 +280,11 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="1" attributes="0">
-                                  <Component id="certPropertiesLabel" pref="233" max="32767" attributes="0"/>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="certPropertiesLabel" pref="182" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="testButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jButton1" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="apiKeyTextField" alignment="0" pref="304" max="32767" attributes="0"/>
                               <Component id="serverTextField" alignment="0" pref="304" max="32767" attributes="0"/>
@@ -306,9 +308,10 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="testButton" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="certPropertiesLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="testButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace pref="81" max="32767" attributes="0"/>
                       </Group>
@@ -354,6 +357,14 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Loading..."/>
                   </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="jButton1">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Paste"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>
@@ -812,16 +823,34 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="427" max="32767" attributes="0"/>
+                          <Component id="localStatusLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="localSendingLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="localReceivingLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="217" max="32767" attributes="0"/>
+                          <Component id="jLabel11" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="remoteStatusLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="remoteSendingLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="remoteReceivingLabel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                           <Component id="jLabel7" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
-                          <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="localStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="localSendingLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="localReceivingLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="remoteSendingLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="remoteReceivingLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="remoteStatusLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -829,12 +858,54 @@
               <SubComponents>
                 <Component class="javax.swing.JLabel" name="jLabel7">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Status:"/>
+                    <Property name="text" type="java.lang.String" value="Local:"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JLabel" name="jLabel8">
+                <Component class="javax.swing.JLabel" name="localStatusLabel">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Connected"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel11">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Remote:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="remoteStatusLabel">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Connected"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="localSendingLabel">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Courier New" size="11" style="0"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="( )"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="localReceivingLabel">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Courier New" size="11" style="0"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="( )"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="remoteSendingLabel">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Courier New" size="11" style="0"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="( )"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="remoteReceivingLabel">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Courier New" size="11" style="0"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="( )"/>
                   </Properties>
                 </Component>
               </SubComponents>

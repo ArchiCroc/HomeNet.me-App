@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2011 Matthew Doll <mdoll at homenet.me>.
+ *
+ * This file is part of HomeNet.
+ *
+ * HomeNet is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * HomeNet is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with HomeNet.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package homenet;
 
 import static homenet.Packet.*;
@@ -43,7 +62,9 @@ public class PortXmlrpc extends Port {
     public void send(Packet packet) {
 
             if ((_node == 0) || (_node == packet.getToNode())) {
-
+            for(PortListener l : _homeNet._portListeners){
+            l.portSendingStart(_id);
+        }
                 Hashtable xmlpacket = new Hashtable();
                 System.out.println(new String(Base64.encodeBase64(packet.getData())));
                 String packetBase64 = new String(Base64.encodeBase64(packet.getData()));
@@ -75,6 +96,9 @@ public class PortXmlrpc extends Port {
 
             packet.setStatus(STATUS_SENT);
             _sending = false;
+                     for(PortListener l : _homeNet._portListeners){
+            l.portSendingEnd(_id);
+        }
         }
 
         public void stop() {
@@ -82,7 +106,9 @@ public class PortXmlrpc extends Port {
 //
 
     public void receive(Packet packet) {
-
+            for(PortListener l : _homeNet._portListeners){
+            l.portReceivingStart(_id);
+        }
             //Packet receivingPacket = _homeNet._getNewPacket();
             //receivingPacket = packet;
             System.out.println("Receiving XMLRPC: ");
@@ -92,6 +118,9 @@ public class PortXmlrpc extends Port {
             _homeNet.addPacket(packet);
             System.out.println("added XMLRPC packet to stack");
             _receiving = false;
+            for(PortListener l : _homeNet._portListeners){
+            l.portReceivingEnd(_id);
+        }
     }
 //
 

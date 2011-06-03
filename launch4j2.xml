@@ -1,0 +1,62 @@
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>C:\Projects (Safe)\HomeNet.me-App\dist\HomeNetApp.jar</jar>
+  <outfile>C:\Projects (Safe)\HomeNet.me-App\dist\HomeNetApp.exe</outfile>
+  <errTitle></errTitle>
+  <cmdLine></cmdLine>
+  <chdir></chdir>
+  <priority>normal</priority>
+  <downloadUrl>http://java.com/download</downloadUrl>
+  <supportUrl></supportUrl>
+  <customProcName>false</customProcName>
+  <stayAlive>false</stayAlive>
+  <manifest></manifest>
+  <icon></icon>
+  <singleInstance>
+    <mutexName>HomeNetAppMUTEX</mutexName>
+    <windowTitle></windowTitle>
+  </singleInstance>
+  <classPath>
+    <mainClass>homenetapp.HomeNetAppGui</mainClass>
+    <cp>lib/RXTXcomm.jar</cp>
+    <cp>lib/commons-collections-3.2.1.jar</cp>
+    <cp>lib/commons-logging-1.1.1.jar</cp>
+    <cp>lib/commons-configuration-1.6.jar</cp>
+    <cp>lib/commons-lang-2.6.jar</cp>
+    <cp>lib/commons-codec-1.5.jar</cp>
+    <cp>lib/commons-beanutils-1.8.3.jar</cp>
+    <cp>lib/commons-logging-1.1.1.jar</cp>
+    <cp>lib/ws-commons-util-1.0.2.jar</cp>
+    <cp>lib/xmlrpc-client-3.1.3.jar</cp>
+    <cp>lib/xmlrpc-common-3.1.3.jar</cp>
+    <cp>lib/xmlrpc-server-3.1.3.jar</cp>
+    <cp>lib/javax.servlet.jar</cp>
+    <cp>lib/AbsoluteLayout.jar</cp>
+    <cp>lib/cling-core-1.0.2.jar</cp>
+    <cp>lib/teleal-common-1.0.12.jar</cp>
+    <cp>lib/cling-support-1.0.2.jar</cp>
+    <cp>lib/weupnp-0.1.1.jar</cp>
+    <cp>commands.txt</cp>
+    <cp>lib/rxtxSerial.dll</cp>
+  </classPath>
+  <jre>
+    <path></path>
+    <minVersion>1.6.0</minVersion>
+    <maxVersion></maxVersion>
+    <jdkPreference>preferJre</jdkPreference>
+    <opt>-Djava.library.path=./lib</opt>
+  </jre>
+  <versionInfo>
+    <fileVersion>0.0.1.0</fileVersion>
+    <txtFileVersion>0.0.1.0 Alpha</txtFileVersion>
+    <fileDescription>HomeNetApp</fileDescription>
+    <copyright>2011 Matthew Doll</copyright>
+    <productVersion>0.0.1.0</productVersion>
+    <txtProductVersion>0.0.1.0 Alpha</txtProductVersion>
+    <productName>HomeNetApp</productName>
+    <companyName>HomeNet.me</companyName>
+    <internalName>HomeNetApp-Java</internalName>
+    <originalFilename>HomeNetApp.exe</originalFilename>
+  </versionInfo>
+</launch4jConfig>
