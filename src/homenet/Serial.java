@@ -36,9 +36,9 @@ import java.io.OutputStream;
 public class Serial {
 
     public String port;
-    SerialPort serialPort;
-    InputStream input;
-    OutputStream output;
+    SerialPort serialPort = null;
+    InputStream input = null;
+    OutputStream output = null;
    // byte buffer[] = new byte[1024];
    // int bufferIndex = 0;
   //  int bufferLast = 0;
@@ -48,16 +48,22 @@ public class Serial {
         this.port = port;
     }
 
-    public boolean begin(int speed) {
+    public boolean begin(int speed) throws Exception {
         
         System.out.println("Beginning Serial Port "+port+" @ "+speed);
         
+        CommPortIdentifier portIdentifier = null;
+        
          try {
-            CommPortIdentifier portIdentifier = CommPortIdentifier.getPortIdentifier(this.port);
-            if (portIdentifier.isCurrentlyOwned()) {
+            portIdentifier = CommPortIdentifier.getPortIdentifier(this.port);
+         }catch (Exception e){
+             throw new Exception("Port not ready");
+         }
+             
+         if (portIdentifier.isCurrentlyOwned()) {
                 //System.out.println("Error: Port is currently in use");
-                throw new Exception("Error: Port is currently in use");
-            } else {
+                throw new Exception("Port is currently in use");
+         } else {
                 CommPort commPort = portIdentifier.open(this.getClass().getName(), 2000);
 
                 if (commPort instanceof SerialPort) {
@@ -65,31 +71,31 @@ public class Serial {
                     serialPort.setSerialPortParams(speed, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
 
                     input = serialPort.getInputStream();
-                    System.out.println("InputStream type: "+input.getClass().getName());
+                    //System.out.println("InputStream type: "+input.getClass().getName());
                     output = serialPort.getOutputStream();
                 } else {
                     throw new Exception("Only Supports Serial Ports");
                 }
             }
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            System.err.println(e.getMessage());
-            //exception = e;
-            //e.printStackTrace();
-            serialPort = null;
-            input = null;
-            output = null;
-            return false;
-        }
+//        } catch (Exception e) {
+//            System.err.println("Serial Begin: "+e.getMessage());
+// 
+//            //exception = e;
+//            e.printStackTrace();
+//            serialPort = null;
+//            input = null;
+//            output = null;
+//            return false;
+//        }
          return true;
     }
     
-    public boolean begin() {
+    public boolean begin() throws Exception {
        return begin(115200);
     }
 
-    public void end() {
-        try {
+    public void end() throws Exception {
+        //try {
             // do io streams need to be closed first?
             if (input != null) {
                 input.close();
@@ -98,19 +104,19 @@ public class Serial {
                 output.close();
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+      //  } catch (Exception e) {
+      //      e.printStackTrace();
+     //   }
         input = null;
         output = null;
 
-        try {
+     //   try {
             if (serialPort != null) {
                 serialPort.close();  // close the port
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+      //  } catch (Exception e) {
+         //   e.printStackTrace();
+     //   }
         serialPort = null;
 
     }
@@ -124,15 +130,15 @@ public class Serial {
     public int read() throws Exception {
       //  System.out.println("Serial: Reading Data");
       //  byte[] buffer = new byte[1]; 
-        try{
+       // try{
        //     if( (input.read(buffer,0,1)) > -1){
                 
                 return input.read();
           //      return buffer[0];
          //   } 
-        } catch (IOException e){
-            return -1;
-        }
+      //  } catch (IOException e){
+      //      return -1;
+     //   }
         
       //  return -1;
     }
@@ -176,7 +182,7 @@ public class Serial {
         while (portEnum.hasMoreElements()) {
             CommPortIdentifier portIdentifier = portEnum.nextElement();
             if (portIdentifier.getPortType() == CommPortIdentifier.PORT_SERIAL) {
-                ports.add(portIdentifier.getName());
+                ports.add((String) portIdentifier.getName());
               //  System.out.println(portIdentifier.getName()  +  " - " +  getPortTypeName(portIdentifier.getPortType()) );
             }
         }

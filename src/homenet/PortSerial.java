@@ -20,14 +20,14 @@ package homenet;
 
 import static homenet.Packet.*;
 import java.util.*;
+
 /**
  *
  * @author mdoll
  */
 public class PortSerial extends Port {
-    
-    final static int SERIAL_SPEED = 115200;
 
+    final static int SERIAL_SPEED = 115200;
     private int _ptr;
     private Serial _serial;
     private int _receivingChecksum;
@@ -44,16 +44,21 @@ public class PortSerial extends Port {
     }
 
     @Override
-    public void init(String id) {
-        
-        System.out.println("Init Port: "+id);
-        
+    public void init(String id) throws Exception {
+
+        System.out.println("Init Port: " + id);
+
         _sending = false;
         _receiving = false;
         _id = id;
         _receivingChecksum = 0;
         _ptr = 0;
+        try {
         _serial.begin(SERIAL_SPEED);
+        } catch(Exception e){
+            _homeNet.removePort(id);
+            throw new Exception(e.getMessage());
+        }
     }
 
     @Override
@@ -67,7 +72,7 @@ public class PortSerial extends Port {
         _sendingPacket = packet;
 
         System.out.print("Sending: ");
-        for(PortListener l : _homeNet._portListeners){
+        for (PortListener l : _homeNet._portListeners) {
             l.portSendingStart(_id);
         }
         for (int i = 0; i < packet.getLength(); i++) {
@@ -79,32 +84,37 @@ public class PortSerial extends Port {
                 stop();
                 _homeNet.removePort(getId());
                 packet.setStatus(STATUS_FAILED);
-                for(PortListener l : _homeNet._portListeners){
-            l.portSendingEnd(_id);
-        }
+                for (PortListener l : _homeNet._portListeners) {
+                    l.portSendingEnd(_id);
+                }
                 return;
             }
         }
         System.out.println("");
         packet.setStatus(STATUS_SENT);
-         for(PortListener l : _homeNet._portListeners){
+        for (PortListener l : _homeNet._portListeners) {
             l.portSendingEnd(_id);
         }
     }
 
     @Override
     public void stop() {
-        _serial.end();
-        System.out.println("stopping port");
+        System.out.println("Stopping Serial port: "+_id);
+        try {
+            _serial.end();
+        } catch (Exception e) {
+            System.err.println("Serial Error: " + e.getMessage());
+        }
+
     }
-    
+
     private void write(int data) {
         try {
             _serial.write(data);
         } catch (Exception e) {
-            System.out.print("Exception Caught: " + e);
+            System.err.print("Exception Caught: " + e.getMessage());
             stop();
-            _homeNet.removePort(getId());
+            _homeNet.removePort(_id);
             return;
         }
     }
@@ -113,12 +123,12 @@ public class PortSerial extends Port {
     public void receive() {
 
         while (_serial.available() > 0) {
-           // System.out.println("Receiving: "+_serial.available());
+            // System.out.println("Receiving: "+_serial.available());
             int byteIn;
             try {
                 byteIn = _serial.read();
             } catch (Exception e) {
-                System.out.println("caught exception 2");
+                System.err.print("Exception2 Caught: " + e.getMessage());
                 e.printStackTrace();
                 stop();
                 _homeNet.removePort(getId());
@@ -145,15 +155,15 @@ public class PortSerial extends Port {
 
                 if ((byteIn < 10) || (byteIn > 66)) { //bad byte, send 0 to start over
                     _serial.flush();
-                    
+
                     write(0);
-                   
+
                     return;
                 }
 
- for(PortListener l : _homeNet._portListeners){
-            l.portReceivingStart(_id);
-        }
+                for (PortListener l : _homeNet._portListeners) {
+                    l.portReceivingStart(_id);
+                }
                 _receiving = true;
                 _receivingTimer = System.currentTimeMillis();
                 _receivingPacket = _homeNet.getNewPacket();
@@ -174,9 +184,9 @@ public class PortSerial extends Port {
             System.out.println("Recieving Packet Timed Out");
             _receivingPacket.setStatus(STATUS_CLEAR);
             _receiving = false;
-            for(PortListener l : _homeNet._portListeners){
-            l.portReceivingEnd(_id);
-        }
+            for (PortListener l : _homeNet._portListeners) {
+                l.portReceivingEnd(_id);
+            }
             //Serial.flush();
             write(0); //tell the node to resend last
         }
@@ -230,7 +240,7 @@ public class PortSerial extends Port {
             //reset incomingPacket
         }
         //*/
-        for(PortListener l : _homeNet._portListeners){
+        for (PortListener l : _homeNet._portListeners) {
             l.portReceivingEnd(_id);
         }
         _receiving = false;

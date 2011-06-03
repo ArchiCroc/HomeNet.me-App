@@ -360,7 +360,12 @@ public class SetupWizardGui extends javax.swing.JPanel {
                 javax.swing.JOptionPane.showMessageDialog(null, "Invalid Server", "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
                 return;
             }
-              String reply = (String)xmlrpcClient.execute("HomeNet.validateApikey", apikeyTextField.getText());
+            String reply = "Unkown Error";
+                try{
+                    reply = (String)xmlrpcClient.execute("HomeNet.validateApikey", apikeyTextField.getText());
+                } catch (Exception e){
+                    reply = "Exception: "+e.getMessage();
+                }
               
               if(!reply.equals("true")){
                  javax.swing.JOptionPane.showMessageDialog(null, reply, "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 

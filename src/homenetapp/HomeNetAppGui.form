@@ -828,7 +828,7 @@
                           <Component id="localSendingLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="localReceivingLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="217" max="32767" attributes="0"/>
+                          <EmptySpace pref="177" max="32767" attributes="0"/>
                           <Component id="jLabel11" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="remoteStatusLabel" min="-2" max="-2" attributes="0"/>
@@ -863,7 +863,7 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="localStatusLabel">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Connected"/>
+                    <Property name="text" type="java.lang.String" value="Not Connected"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel11">
@@ -873,7 +873,7 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="remoteStatusLabel">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Connected"/>
+                    <Property name="text" type="java.lang.String" value="Not Connected"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="localSendingLabel">

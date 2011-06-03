@@ -69,22 +69,19 @@ public class XmlrpcClient {
     /**
      *	The core execution method.
      */
-    public Object execute(String method, Object parameter) {
+    public Object execute(String method, Object parameter) throws Exception  {
         Vector params = new Vector();
         params.addElement(parameter);
-        try {
+
             Object result = client.execute(method, params);
             return result;
-        } catch (XmlRpcException e) {
-            e.printStackTrace();
-        } 
-        return null;
+        
     }
 
     /**
      *	Execute an array of Objects.
      */
-    public Object execute(String method, Object[] parameters) {
+    public Object execute(String method, Object[] parameters) throws Exception {
         Vector params = new Vector();
         for (int i = 0; i < parameters.length; i++) {
             params.addElement(parameters[i]);
@@ -101,11 +98,11 @@ public class XmlrpcClient {
     /**
      *	Thre rest is overwritten to have a simple interface.
      */
-    public Object execute(String method, int parameter) {
+    public Object execute(String method, int parameter) throws Exception  {
         return execute(method, new Integer(parameter));
     }
 
-    public Object execute(String method, int[] parameters) {
+    public Object execute(String method, int[] parameters) throws Exception  {
         Integer[] params = new Integer[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             params[i] = new Integer(parameters[i]);
@@ -113,11 +110,11 @@ public class XmlrpcClient {
         return execute(method, params);
     }
 
-    public Object execute(String method, float parameter) {
+    public Object execute(String method, float parameter) throws Exception  {
         return execute(method, new Float(parameter));
     }
 
-    public Object execute(String method, float[] parameters) {
+    public Object execute(String method, float[] parameters) throws Exception  {
         Float[] params = new Float[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             params[i] = new Float(parameters[i]);
@@ -125,11 +122,11 @@ public class XmlrpcClient {
         return execute(method, params);
     }
 
-    public Object execute(String method, double parameter) {
+    public Object execute(String method, double parameter) throws Exception  {
         return execute(method, new Double(parameter));
     }
 
-    public Object execute(String method, double[] parameters) {
+    public Object execute(String method, double[] parameters) throws Exception  {
         Double[] params = new Double[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             params[i] = new Double(parameters[i]);
@@ -137,11 +134,11 @@ public class XmlrpcClient {
         return execute(method, params);
     }
 
-    public Object execute(String method, boolean parameter) {
+    public Object execute(String method, boolean parameter) throws Exception  {
         return execute(method, new Boolean(parameter));
     }
 
-    public Object execute(String method, boolean[] parameters) {
+    public Object execute(String method, boolean[] parameters) throws Exception  {
         Boolean[] params = new Boolean[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             params[i] = new Boolean(parameters[i]);
@@ -149,16 +146,13 @@ public class XmlrpcClient {
         return execute(method, params);
     }
 
-    public Object execute(String method, byte[] parameters) {
+    public Object execute(String method, byte[] parameters) throws Exception  {
         Vector params = new Vector();
         params.addElement(parameters);
-        try {
+
             Object result = client.execute(method, params);
             return result;
-        } catch (XmlRpcException e) {
-            e.printStackTrace();
-        } 
-        return null;
+
     }
 
     /**

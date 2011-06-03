@@ -19,6 +19,7 @@
 package homenet;
 
 import java.util.*;
+import java.util.concurrent.*;
 
 import static homenet.Packet.*;
 
@@ -31,9 +32,9 @@ public class Stack {
     static int InterruptCount = 0;
 
     public int _nodeId;
-    private ArrayList<Packet> _packets = new ArrayList();
-    private HashMap<String, Port> _ports = new HashMap();
-    private HashMap<Integer, Device> _devices = new HashMap();
+    private Queue<Packet> _packets = new ConcurrentLinkedQueue();
+    private Map<String, Port> _ports = new ConcurrentHashMap();
+    private Map<Integer, Device> _devices = new ConcurrentHashMap();
     private ArrayList<Schedule> _deviceSchedule = new ArrayList();
     private ArrayList<Interrupt> _deviceInterrupts = new ArrayList();
     private int _uniqueId;
@@ -43,8 +44,8 @@ public class Stack {
     private ProcessThread _processThread; 
     
     
-    private ArrayList<PacketListener> _packetListeners = new ArrayList();
-    public ArrayList<PortListener> _portListeners = new ArrayList();
+    private List<PacketListener> _packetListeners = new CopyOnWriteArrayList();
+    public List<PortListener> _portListeners = new CopyOnWriteArrayList();
 
     public Stack(int id) {
         _nodeId = id;
@@ -61,7 +62,7 @@ public class Stack {
         _portListeners.add(listener);
     }
 
-    public void addPort(String name, Port port) {
+    public void addPort(String name, Port port) throws Exception {
         _ports.put(name, port);
         port.init(name);
         for(PortListener l : _portListeners){
@@ -70,13 +71,18 @@ public class Stack {
     }
 
     public void removePort(String name) {
-        _ports.remove(name);
+        Port p = _ports.get(name);
+        if(p != null){
+            _ports.get(name).stop();
+            _ports.remove(name);
+        }
         for(PortListener l : _portListeners){
             l.portRemoved(name);
         }
+        
     }
 
-    public HashMap getPorts() {
+    public Map getPorts() {
         return _ports;
     }
     
@@ -94,26 +100,26 @@ public class Stack {
     
 
     public Packet getNewPacket() {
-        if (_packets.size() > 10) {
-            System.out.println("WARNING PacketStack is getting Large. " + _packets.size() + " Packets");
-        }
+//        if (_packets.size() > 10) {
+//            System.out.println("WARNING PacketStack is getting Large. " + _packets.size() + " Packets");
+//        }
         System.out.println("Creating New Packet. Stack has " + _packets.size() + " Packets");
         Packet packet = new Packet();
-        _packets.add(packet);
-        return (Packet) _packets.get(_packets.size() - 1);
+        addPacket(packet);
+        return packet;
     }
 
     public void addPacket(Packet packet) {
-        System.out.println("Adding New Packet. Stack has " + _packets.size() + " Packets");
+      //  System.out.println("Adding New Packet. Stack has " + _packets.size() + " Packets");
         _packets.add(packet);
     }
 
     public void init() {
-        _ports = new HashMap();
-        _devices = new HashMap();
+       // _ports = new HashMap();
+       // _devices = new HashMap();
     }
 
-    public void init(HashMap ports, HashMap devices) {
+    public void init(Map ports, Map devices) {
         _ports = ports;
         _devices = devices;
         //setup ports
@@ -121,7 +127,7 @@ public class Stack {
         Iterator iterator = _ports.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry portSet = (Map.Entry) iterator.next();
-            ((Port) portSet.getValue()).init((String) portSet.getKey());
+         //   ((Port) portSet.getValue()).init((String) portSet.getKey());
         }
 
 
@@ -129,7 +135,7 @@ public class Stack {
         iterator = _devices.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry deviceSet = (Map.Entry) iterator.next();
-            ((Port) deviceSet.getValue()).init((String) deviceSet.getKey());
+         //   ((Port) deviceSet.getValue()).init((String) deviceSet.getKey());
         }
     }
 
@@ -157,13 +163,23 @@ public class Stack {
     public boolean process() {
         boolean process = false;
 
-        for (int i = _packets.size() - 1; i >= 0; i--) {
-            if (_processPacket(_packets.get(i)) == true) {
+        
+        for (Packet p : _packets) {
+            if (_processPacket(_packets.peek()) == true) {
                 process = true;
             } else {
-                _packets.remove(i);
+                _packets.poll();
             }
         }
+        
+        
+//        for (int i = _packets.size() - 1; i >= 0; i--) {
+//            if (_processPacket(_packets.get(i)) == true) {
+//                process = true;
+//            } else {
+//                _packets.remove(i);
+//            }
+//        }
         return process;
     }
 
@@ -251,7 +267,8 @@ public class Stack {
                     }
                 }
                 System.out.println("toPort: " + packet.getToPort()); //=null?
-                if (((Port) _ports.get(packet.getToPort())).isSending() == false) {
+                //this will not try and send packets when there isn't a port to send it to
+                if ((packet.getToPort() != null ) && (((Port) _ports.get(packet.getToPort())).isSending() == false)) {
                     System.out.println("changing status to send");
                     packet.setStatus(STATUS_SENDING);
                 } else {

@@ -24,6 +24,7 @@ import java.net.*;
 import java.text.*;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.*;
 import java.util.zip.*;
 import java.lang.Throwable;
@@ -61,17 +62,7 @@ public class HomeNetApp {
     public boolean serverUpnpEnabled = true;
     public int serverPort = 2443;
     public boolean configDone = false;
-    
-    public boolean connectLocalIn = false;
-    public boolean connectLocalOut = false;
-    
-    
-    public boolean connectRemoteOut = false; //is the app have a valid connection to a homenet server?
-    public boolean connectRemoteIn = false; //can the homenet server connect to the app?
-    
-    public boolean connectRemoteValid = false; //is the apikey/permissions valid
-   
-    
+
     List<String> portsSerial = new ArrayList();
     
 
@@ -79,12 +70,14 @@ public class HomeNetApp {
     public HomeNetApp() {
         loadConfig();
         loadCommands();
+        
+        homenet = new homenet.Stack(0xff);
+        homenet.init();
     }
 
     public void start() throws Exception {
 
-        homenet = new homenet.Stack(0xff);
-        homenet.init();
+        
 
         // HashMap<String,Port> ports = new HashMap<String,Port>();
         //  HashMap<Integer,Device> devices = new HashMap<Integer,Device>();
@@ -265,11 +258,11 @@ public class HomeNetApp {
 
     class SerialManager {
 
-        public ArrayList<String> portList = new ArrayList();
-        public ArrayList<String> selectedPorts = new ArrayList();
+        public List<String> portList = new CopyOnWriteArrayList();
+        public List<String> selectedPorts = new CopyOnWriteArrayList();
         private SerialCheckThread sThread;
         private homenet.Stack _homeNet;
-        ArrayList<SerialListener> _listeners = new ArrayList();
+        private List<SerialListener> _listeners = new CopyOnWriteArrayList();
 
         public SerialManager(homenet.Stack stack) {
 
@@ -278,7 +271,7 @@ public class HomeNetApp {
 
         }
 
-        public void start() {
+        public void start() throws Exception {
             //loadSerialPorts();
             checkSerialPorts();
 
@@ -300,35 +293,38 @@ public class HomeNetApp {
             _listeners.add(l);
         }
 
-        public boolean activatePort(String port) {
+        public boolean activatePort(String port) throws Exception {
             System.out.println("Activate Port: " + port);
             if (!portList.contains(port)) {
                 return false;
             }
 
 
-            try {
-                _homeNet.addPort(port, new PortSerial(_homeNet, new Serial(port)));
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-                return false;
+           //@throws Exception
+           _homeNet.addPort(port, new PortSerial(_homeNet, new Serial(port)));
+           
+            if(!selectedPorts.contains(port)){
+                selectedPorts.add(port);
             }
-
-            selectedPorts.add(port);
+            
 
             for (SerialListener l : _listeners) {
                 l.portActivated(port);
             }
             return true;
         }
+         public void deactivatePort(String port){
+             deactivatePort(port, true);
+         }
 
-        public void deactivatePort(String port) {
+        public void deactivatePort(String port, boolean remove) {
             System.out.println("Deactivate Port: " + port);
             //  if (currentPorts.containsKey(port)) {
             _homeNet.removePort(port);
             //     }
-
-            selectedPorts.remove(port);
+            if(remove == true){
+                selectedPorts.remove(port);
+            }
 
             for (SerialListener l : _listeners) {
                 l.portDeactivated(port);
@@ -338,14 +334,33 @@ public class HomeNetApp {
         public void checkSerialPorts() {
 
             // System.out.println("HomeNetApp.checkSerialPorts");
-            ArrayList<String> currentList = Serial.listPorts();
-            HashMap currentPorts = _homeNet.getPorts();
+            List<String> currentList = Serial.listPorts();
+            Map currentPorts = _homeNet.getPorts();
 
             //check for new ports
             for (String k : currentList) {
                 if (!portList.contains(k)) {
                     portList.add(k);
                     System.out.println("New port found: " + k);
+                    
+                    //check to see if this one is on our favorites list
+                    if(selectedPorts.contains(k))
+                    {
+                        final String l = k;
+                        
+                        System.out.println("Hey! port " + l+" is on the VIP list, will try and add it in 10 seconds");
+                        //brand new serial ports are grumpy. this will delay adding it for 10 seconds
+                        Thread delay = new Thread(){
+                            public void run(){
+                                try { Thread.sleep(10*1000); 
+                                activatePort(l);
+                                } catch(Exception e){}
+                                
+                            }
+                        };
+                                delay.start();
+                    }
+                    
                     //    System.out.println("List size: " + _listeners.size());
                     //process Listeners
                     for (SerialListener l : _listeners) {
@@ -360,10 +375,10 @@ public class HomeNetApp {
             for (String k : portList) {
                 if (!currentList.contains(k)) {
                     //remove from portlist too;
-                    System.out.println("Port " + k + " was Disconnected");
-                    System.out.println("auto remove " + k);
+                    System.out.println("Port " + k + " was disconnected");
+                    System.out.println("Auto remove " + k);
 
-                    deactivatePort(k);
+                    deactivatePort(k, false);
                     currentPorts.remove(k);
 
                     portList.remove(k);

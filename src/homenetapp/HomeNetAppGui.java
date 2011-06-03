@@ -54,9 +54,9 @@ import homenet.XmlrpcClient;
  */
 public class HomeNetAppGui extends javax.swing.JFrame {
 
-    public HashMap<String, JCheckBoxMenuItem> menuItems = new HashMap();
+    public HashMap<String, JCheckBoxMenuItem> menuItems = new HashMap<String, JCheckBoxMenuItem>();
     public HomeNetApp homenetapp;
-    private LinkedList<homenet.Packet> packetList = new LinkedList();
+    private LinkedList<homenet.Packet> packetList = new LinkedList<homenet.Packet>();
     //default settings
     int packetToNode = 1;
     int packetToDevice = 1;
@@ -76,7 +76,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         homenetapp = new HomeNetApp();
 
         initComponents();
-        // redirectSystemStreams();
+       redirectSystemStreams();
         System.err.println("test");
         SettingsDialog.setLocationRelativeTo(null);
 
@@ -120,13 +120,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     }
 
     private void startHomeNetApp() {
-        try {
-            homenetapp.start();
-        } catch (Exception e) {
-            //show popup and exit program
-            javax.swing.JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-            System.err.println(e.getMessage());
-        }
+        
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
 
@@ -135,72 +129,18 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 exit();
             }
         });
-
-        loadSettings();
-        SendPacketFrame.setLocationRelativeTo(null);
-
-        homenetapp.homenet.addPacketListener(new homenet.PacketListener() {
-
-            public void packetRecieved(homenet.Packet packet) {
-                addPacketToList(packet);
-            }
-        });
-
-        homenetapp.serialmanager.addListener(new SerialListener() {
-
-            public void portAdded(String name) {
-                System.out.println("portAddedEvent");
-
-                javax.swing.JCheckBoxMenuItem serialPortCheckBox = new javax.swing.JCheckBoxMenuItem(name);
-
-                serialPortCheckBox.addActionListener(new java.awt.event.ActionListener() {
-
-                    public void actionPerformed(java.awt.event.ActionEvent evt) {
-                        JCheckBoxMenuItem checkbox = (JCheckBoxMenuItem) evt.getSource();
-                        if (checkbox.isSelected()) {
-                            if (homenetapp.serialmanager.activatePort(checkbox.getText()) != true) {
-                                javax.swing.JOptionPane.showMessageDialog(null, "Can't Connect to Port " + checkbox.getText() + ". Try again in a few seconds", "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-                            }
-                        } else {
-                            homenetapp.serialmanager.deactivatePort(checkbox.getText());
-                        }
-                    }
-                });
-
-                // serialPortCheckBox.setMnemonic(java.awt.event.KeyEvent.VK_1);
-                menuItems.put(name, serialPortCheckBox);
-                menuSerialPorts.add(serialPortCheckBox);
-
-            }
-
-            public void portRemoved(String name) {
-                System.out.println("portRemovedEvent");
-                menuSerialPorts.remove(menuItems.get(name));
-            }
-
-            public void portActivated(String name) {
-                System.out.println("portActivatedEvent");
-                menuItems.get(name).setSelected(true);
-
-            }
-
-            public void portDeactivated(String name) {
-                System.out.println("portDeactivatedEvent");
-                menuItems.get(name).setSelected(false);
-            }
-        });
         
          homenetapp.homenet.addPortListener(new homenet.PortListener() {
         
-            ArrayList<String> local = new ArrayList(); 
-            ArrayList<String> remote = new ArrayList(); 
+            ArrayList<String> local = new ArrayList<String>(); 
+            ArrayList<String> remote = new ArrayList<String>(); 
             
             private boolean isRemote(String port){
                 return port.equals("xmlrpc");
             }
              
             public void portAdded(String port) {
-                System.out.println("portAddedEvent");
+               // System.out.println("portAddedEvent");
                 if(isRemote(port)){
                     remote.add(port);
                     remoteStatusLabel.setText("Connected");
@@ -211,7 +151,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             }
 
             public void portRemoved(String port) {
-                System.out.println("portRemovedEvent");
+                //System.out.println("portRemovedEvent");
                 if(isRemote(port)){
                     remote.remove(port);
                     if(remote.size() < 1){
@@ -226,7 +166,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             }
 
             public void portSendingStart(String port) {
-                System.out.println("portSendingStartEvent");
+               // System.out.println("portSendingStartEvent");
                 if(isRemote(port)){
                     remoteSendingLabel.setText("(X)");
                 } else {
@@ -235,7 +175,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             }
 
             public void portSendingEnd(String port) {
-                System.out.println("portSendingEndEvent");
+               // System.out.println("portSendingEndEvent");
                 if(isRemote(port)){
                     Thread delayThread = new Thread() {
                         public void run() {
@@ -262,7 +202,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             }
 
             public void portReceivingStart(String port) {
-                System.out.println("portRecievingStartEvent");
+              //  System.out.println("portRecievingStartEvent");
                 if(isRemote(port)){
                     remoteReceivingLabel.setText("(X)");
                 } else {
@@ -271,7 +211,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
             }
 
             public void portReceivingEnd(String port) {
-                System.out.println("portRecievingEndEvent");
+             //   System.out.println("portRecievingEndEvent");
               if(isRemote(port)){
                     Thread delayThread = new Thread() {
                         public void run() {
@@ -297,8 +237,83 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 }
             }
         });
+         
+           
+        try {
+            homenetapp.start();
+        } catch (Exception e) {
+            //show popup and exit program
+            javax.swing.JOptionPane.showMessageDialog(null, "Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            System.err.println(e.getMessage());
+        } 
 
+         
+         loadSettings();
+
+        
+        SendPacketFrame.setLocationRelativeTo(null);
+
+        homenetapp.homenet.addPacketListener(new homenet.PacketListener() {
+
+            public void packetRecieved(homenet.Packet packet) {
+                addPacketToList(packet);
+            }
+        });
+
+        homenetapp.serialmanager.addListener(new SerialListener() {
+
+            public void portAdded(String name) {
+            //    System.out.println("portAddedEvent");
+
+                javax.swing.JCheckBoxMenuItem serialPortCheckBox = new javax.swing.JCheckBoxMenuItem(name);
+
+                serialPortCheckBox.addActionListener(new java.awt.event.ActionListener() {
+
+                    public void actionPerformed(java.awt.event.ActionEvent evt) {
+                        JCheckBoxMenuItem checkbox = (JCheckBoxMenuItem) evt.getSource();
+                        if (checkbox.isSelected()) {
+                            try { 
+                                homenetapp.serialmanager.activatePort(checkbox.getText());
+                            } catch(Exception e) {
+                                javax.swing.JOptionPane.showMessageDialog(null, "Port " + checkbox.getText() + " Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+                            }
+                        } else {
+                            homenetapp.serialmanager.deactivatePort(checkbox.getText());
+                        }
+                    }
+                });
+
+                // serialPortCheckBox.setMnemonic(java.awt.event.KeyEvent.VK_1);
+                menuItems.put(name, serialPortCheckBox);
+                menuSerialPorts.add(serialPortCheckBox);
+
+            }
+
+            public void portRemoved(String name) {
+               // System.out.println("portRemovedEvent");
+                menuSerialPorts.remove(menuItems.get(name));
+            }
+
+            public void portActivated(String name) {
+              //  System.out.println("portActivatedEvent");
+                menuItems.get(name).setSelected(true);
+
+            }
+
+            public void portDeactivated(String name) {
+              //  System.out.println("portDeactivatedEvent");
+                menuItems.get(name).setSelected(false);
+            }
+        });
+        
+        
+       
+         
+        try {
         homenetapp.serialmanager.start();
+        } catch (Exception e){
+            javax.swing.JOptionPane.showMessageDialog(null, "Port Error: "+e.getMessage(), "Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     class setupFrameEventHandler extends WindowAdapter {
@@ -845,22 +860,22 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         jLabel7.setText("Local:");
 
-        localStatusLabel.setText("Connected");
+        localStatusLabel.setText("Not Connected");
 
         jLabel11.setText("Remote:");
 
-        remoteStatusLabel.setText("Connected");
+        remoteStatusLabel.setText("Not Connected");
 
-        localSendingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        localSendingLabel.setFont(new java.awt.Font("Courier New", 0, 11));
         localSendingLabel.setText("( )");
 
-        localReceivingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        localReceivingLabel.setFont(new java.awt.Font("Courier New", 0, 11));
         localReceivingLabel.setText("( )");
 
-        remoteSendingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        remoteSendingLabel.setFont(new java.awt.Font("Courier New", 0, 11));
         remoteSendingLabel.setText("( )");
 
-        remoteReceivingLabel.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
+        remoteReceivingLabel.setFont(new java.awt.Font("Courier New", 0, 11));
         remoteReceivingLabel.setText("( )");
 
         javax.swing.GroupLayout statusPanelLayout = new javax.swing.GroupLayout(statusPanel);
@@ -876,7 +891,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                 .addComponent(localSendingLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(localReceivingLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 217, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 177, Short.MAX_VALUE)
                 .addComponent(jLabel11)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(remoteStatusLabel)
@@ -1022,7 +1037,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
 
         homenet.Packet p = homenetapp.homenet.addUdpPacket(packetFromDevice, packetToNode,
                 packetToDevice, (Integer) commandComboBox.getSelectedItem(), new homenet.Payload(packetPayload));
-        
+        p.setFromNode(packetFromNode);
         p.fromPort = "xmlrpc";
 
     }//GEN-LAST:event_sendPacketButtonActionPerformed
@@ -1051,10 +1066,10 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     }//GEN-LAST:event_menuHelpOnlineActionPerformed
 
     private void menuSerialPortsMenuSelected(javax.swing.event.MenuEvent evt) {//GEN-FIRST:event_menuSerialPortsMenuSelected
-        System.out.println("Get Ports");
-        for (String s : homenetapp.serialmanager.portList) {
-            System.out.println("Port: " + s);
-        }
+//        System.out.println("Get Ports");
+//        for (String s : homenetapp.serialmanager.portList) {
+//            System.out.println("Port: " + s);
+//        }
 
         //javax.swing.JCheckBoxMenuItem cbMenuItem = new javax.swing.JCheckBoxMenuItem("A check box menu item");
         //cbMenuItem.setMnemonic(KeyEvent.VK_C);

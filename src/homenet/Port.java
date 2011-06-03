@@ -40,7 +40,7 @@ public abstract class Port {
         timeAdded = System.currentTimeMillis(); //might need to offset or use java datetime
     }
 
-    public abstract void init(String id);
+    public abstract void init(String id) throws Exception;
 
     public abstract void send(Packet packet);
 

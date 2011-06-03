@@ -35,6 +35,8 @@ public class PortXmlrpc extends Port {
 
     XmlrpcClient _client;
     int _node;
+    long _timer;
+    final int retryDelay = 30; //in seconds
 
     public PortXmlrpc(Stack homeNet, XmlrpcClient c, int n) {
         
@@ -56,50 +58,66 @@ public class PortXmlrpc extends Port {
         
         _id = id;
         started = true;
+       
     }
 
     @Override
     public void send(Packet packet) {
+        _sending = true;
+        if ((_node == 0) || (_node == packet.getToNode())) {
+            for (PortListener l : _homeNet._portListeners) {
+                l.portSendingStart(_id);
+            }
+            Hashtable xmlpacket = new Hashtable();
+            System.out.println(new String(Base64.encodeBase64(packet.getData())));
+            String packetBase64 = new String(Base64.encodeBase64(packet.getData()));
+            xmlpacket.put("timestamp", getDateAsISO8601String(packet.getTimestamp()));
+            xmlpacket.put("packet", packetBase64);
+            //System.out.println("DAte: "+packet.getTimestamp().toString());
+            String reply = null;
 
-            if ((_node == 0) || (_node == packet.getToNode())) {
-            for(PortListener l : _homeNet._portListeners){
-            l.portSendingStart(_id);
-        }
-                Hashtable xmlpacket = new Hashtable();
-                System.out.println(new String(Base64.encodeBase64(packet.getData())));
-                String packetBase64 = new String(Base64.encodeBase64(packet.getData()));
-                xmlpacket.put("timestamp", getDateAsISO8601String(packet.getTimestamp()));
-                xmlpacket.put("packet", packetBase64);
-                //System.out.println("DAte: "+packet.getTimestamp().toString());
-                String reply = "";
-
-                try {
-                    reply = (String) _client.execute("HomeNet.packet", xmlpacket);
-                    //reply = (String)homeNetXmlrpcClient.execute("HomeNet.ping", "test test3242342");
-                } catch (Exception e) {
-                    System.out.println("XMLRPC Error: " + e);
+            try {
+                reply = (String) _client.execute("HomeNet.packet", xmlpacket);
+                //reply = (String)homeNetXmlrpcClient.execute("HomeNet.ping", "test test3242342");
+            } catch (Exception e) {
+                //@todo there are probably some specfic exception we need to filter out to kill bad packets
+                System.out.println("XMLRPC Error: " + e);
+                packet.setStatus(STATUS_READY);
+                System.err.println("Possible network error. Will retry in "+retryDelay+" seconds");
+                Thread timer = new Thread(){
+                    public void run(){
+                        try { Thread.sleep(retryDelay*1000); } catch(Exception e){}
+                        _sending = false;
+                    }
+                };
+                timer.start();
+                for (PortListener l : _homeNet._portListeners) {
+                    l.portSendingEnd(_id);
                 }
-
-                if (reply.equals("true")) {
-                    System.out.println("Packet Successfuly sent to HomeNet.me");
-                } else if (!reply.equals(null)) {
-                    System.out.println("HomeNet.me Error- " + reply);
-                } else {
-                    System.out.println("Unknown Error");
-                }
-
-            } else {
-                System.out.println("Packet Skipped");
+                return;
             }
 
-           // debugPacket(packet);
+            if (reply.equals("true")) {
+                System.out.println("Packet Successfuly sent to HomeNet.me");
+            } else if (!reply.equals("true")) {
+                System.out.println("Error: " + reply);
+            } else {
+                System.out.println("Fatal Error");
+            }
+            
 
-            packet.setStatus(STATUS_SENT);
-            _sending = false;
-                     for(PortListener l : _homeNet._portListeners){
+        } else {
+            System.out.println("Packet Skipped");
+        }
+
+        // debugPacket(packet);
+
+        packet.setStatus(STATUS_SENT);
+        _sending = false;
+        for (PortListener l : _homeNet._portListeners) {
             l.portSendingEnd(_id);
         }
-        }
+    }
 
         public void stop() {
     }
