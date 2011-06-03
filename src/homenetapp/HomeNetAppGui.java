@@ -70,8 +70,9 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     public HomeNetAppGui() {
         this.setLocationRelativeTo(null);
 
-
-
+//        try {
+//          javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+//        } catch (Exception e) {e.printStackTrace();}
 
         homenetapp = new HomeNetApp();
 
@@ -1033,7 +1034,75 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         packetFromNode = (Integer) fromNodeSpinner.getValue();
         packetFromDevice = (Integer) fromDeviceSpinner.getValue();
         packetCommand = commandComboBox.getSelectedIndex();
-        packetPayload = payloadTextField.getText();
+        packetPayload = payloadTextField.getText().trim();
+
+        //prepare payload
+
+        //lookup command, if it it's not in the table assume bytes
+        String type = "BYTE";
+             
+        int item = (Integer) commandComboBox.getSelectedItem();
+        
+        if (homenetapp.commands.containsKey(item) == true) {
+            // String[] c = commandMap.get(int(packet[4]));
+            //  println(c);
+            type = homenetapp.commands.get(item)[2];
+            type.toUpperCase();
+        }
+        System.out.println("Send Packet Type: "+type);
+        //return;
+        
+        homenet.Payload payload = null;
+        
+        if (packetPayload.length() > 0) {
+            if (type.equals("STRING")) {
+                payload = new homenet.Payload(packetPayload);
+            } else {
+
+                String[] p = packetPayload.split(",");
+
+
+                if (type.equals("BYTE")) {
+
+                    byte[] bytes = new byte[p.length];
+                    for (int i = 0; i < p.length; i++) {
+                        bytes[i] = (byte) (Integer.parseInt(p[i]) & 0xff);
+                    }
+                    payload = new homenet.Payload(bytes);
+
+                } else if (type.equals("INT")) {
+                    int[] ints = new int[p.length];
+                    for (int i = 0; i < p.length; i++) {
+                        ints[i] = Integer.parseInt(p[i]);
+                    }
+                    payload = new homenet.Payload(ints);
+
+                } else if (type.equals("FLOAT")) {
+                    float[] floats = new float[p.length];
+                    for (int i = 0; i < p.length; i++) {
+                        floats[i] = Float.parseFloat(p[i]);
+                    }
+                    //payload = new homenet.Payload(floats);    
+                } else if (type.equals("LONG")) {
+                    int[] ints = new int[p.length];
+                    for (int i = 0; i < p.length; i++) {
+                        ints[i] = Integer.parseInt(p[i]);
+                    }
+                    payload = new homenet.Payload(ints);
+                } else if (type.equals("BINARY")) {
+                    byte[] bytes = new byte[p.length];
+                    for (int i = 0; i < p.length; i++) {
+                        bytes[i] = (byte) (Integer.parseInt(p[i], 2) & 0xff);
+                    }
+                    payload = new homenet.Payload(bytes);
+                }
+
+            }
+        } else {
+            payload = new homenet.Payload();
+        }
+
+
 
         homenet.Packet p = homenetapp.homenet.addUdpPacket(packetFromDevice, packetToNode,
                 packetToDevice, (Integer) commandComboBox.getSelectedItem(), new homenet.Payload(packetPayload));
