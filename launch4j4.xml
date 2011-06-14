@@ -4,7 +4,7 @@
   <jar>C:\Users\mdoll\Documents\NetBeansProjects\HomeNet.me-App\dist\HomeNetApp.jar</jar>
   <outfile>C:\Users\mdoll\Documents\NetBeansProjects\HomeNet.me-App\dist\HomeNetApp.exe</outfile>
   <errTitle></errTitle>
-  <cmdLine></cmdLine>
+  <cmdLine>-Dicon=HomeNet.gif</cmdLine>
   <chdir></chdir>
   <priority>normal</priority>
   <downloadUrl>http://java.com/download</downloadUrl>
@@ -12,7 +12,7 @@
   <customProcName>false</customProcName>
   <stayAlive>false</stayAlive>
   <manifest></manifest>
-  <icon></icon>
+  <icon>C:\Users\mdoll\Documents\NetBeansProjects\HomeNet.me-App\HomeNet.ico</icon>
   <singleInstance>
     <mutexName>HomeNetAppMUTEX</mutexName>
     <windowTitle></windowTitle>

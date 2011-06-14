@@ -77,6 +77,13 @@ public class HomeNetAppGui extends javax.swing.JFrame {
         homenetapp = new HomeNetApp();
 
         initComponents();
+        
+           ImageIcon ImageIcon = new ImageIcon(getClass().getResource("/HomeNetIcon.gif"));
+    java.awt.Image Image = ImageIcon.getImage();
+    this.setIconImage(Image);
+    SendPacketFrame.setIconImage(Image);
+        
+        
        redirectSystemStreams();
         System.err.println("test");
         SettingsDialog.setLocationRelativeTo(null);
