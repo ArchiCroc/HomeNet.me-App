@@ -68,16 +68,17 @@ public class PortXmlrpc extends Port {
             for (PortListener l : _homeNet._portListeners) {
                 l.portSendingStart(_id);
             }
-            Hashtable xmlpacket = new Hashtable();
+            Hashtable<String, String> xmlpacket = new Hashtable<String, String>();
             System.out.println(new String(Base64.encodeBase64(packet.getData())));
             String packetBase64 = new String(Base64.encodeBase64(packet.getData()));
+            xmlpacket.put("apikey", _client.apikey);
             xmlpacket.put("timestamp", getDateAsISO8601String(packet.getTimestamp()));
             xmlpacket.put("packet", packetBase64);
             //System.out.println("DAte: "+packet.getTimestamp().toString());
-            String reply = null;
+            Boolean reply = false;
 
             try {
-                reply = (String) _client.execute("HomeNet.packet", xmlpacket);
+                reply = (Boolean) _client.execute("homenet.packet.submit", xmlpacket);
                 //reply = (String)homeNetXmlrpcClient.execute("HomeNet.ping", "test test3242342");
             } catch (Exception e) {
                 //@todo there are probably some specfic exception we need to filter out to kill bad packets
@@ -97,10 +98,8 @@ public class PortXmlrpc extends Port {
                 return;
             }
 
-            if (reply.equals("true")) {
+            if (reply == true) {
                 System.out.println("Packet Successfuly sent to HomeNet.me");
-            } else if (!reply.equals("true")) {
-                System.out.println("Error: " + reply);
             } else {
                 System.out.println("Fatal Error");
             }

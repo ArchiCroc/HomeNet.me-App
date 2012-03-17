@@ -120,9 +120,9 @@ public class HomeNetApp {
         System.out.println("    with Api Key: " + clientApiKey );
         _xmlrpcClient = new XmlrpcClient(clientServer, clientApiKey);
         
-        String reply = (String)_xmlrpcClient.execute("HomeNet.validateApikey", clientApiKey);
+        boolean reply = (Boolean)_xmlrpcClient.execute("homenet.apikey.validate", clientApiKey);
         
-        if(!reply.equals("true")){
+        if(reply == false){
             throw new Exception("Invalid API Key");
         }
         

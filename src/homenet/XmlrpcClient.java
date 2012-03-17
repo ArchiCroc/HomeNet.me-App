@@ -56,12 +56,16 @@ public class XmlrpcClient {
 
     XmlRpcClient client;
     XmlRpcClientConfigImpl config;
+    String apikey;
 
     public XmlrpcClient(String address, String key) throws MalformedURLException {
             config = new XmlRpcClientConfigImpl();
+            apikey = key;
             //XmlrpcClient("http://homenet.me/xmlrpc.php?apikey="+homenetApikey);
-            System.out.println("Start client for"+"http://"+address+"/xmlrpc.php?apikey="+key);
-            config.setServerURL(new URL("http://"+address+"/xmlrpc.php?apikey="+key));
+            //System.out.println("Start client for"+"http://"+address+"/xmlrpc.php?apikey="+key);
+            System.out.println("Start client for"+"http://"+address+"/xmlrpc.php");
+            //config.setServerURL(new URL("http://"+address+"/xmlrpc.php?apikey="+key));
+            config.setServerURL(new URL("http://localhost/xmlrpc.php"));
             client = new XmlRpcClient();
             client.setConfig(config);
     }
@@ -70,7 +74,7 @@ public class XmlrpcClient {
      *	The core execution method.
      */
     public Object execute(String method, Object parameter) throws Exception  {
-        Vector params = new Vector();
+        Vector<Object> params = new Vector<Object>();
         params.addElement(parameter);
 
             Object result = client.execute(method, params);
@@ -82,7 +86,7 @@ public class XmlrpcClient {
      *	Execute an array of Objects.
      */
     public Object execute(String method, Object[] parameters) throws Exception {
-        Vector params = new Vector();
+        Vector<Object> params = new Vector<Object>();
         for (int i = 0; i < parameters.length; i++) {
             params.addElement(parameters[i]);
         }
@@ -147,7 +151,7 @@ public class XmlrpcClient {
     }
 
     public Object execute(String method, byte[] parameters) throws Exception  {
-        Vector params = new Vector();
+        Vector<Object> params = new Vector<Object>();
         params.addElement(parameters);
 
             Object result = client.execute(method, params);

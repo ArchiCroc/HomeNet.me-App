@@ -95,12 +95,12 @@ public class SetupWizardGui extends javax.swing.JPanel {
 
         introPanel.setPreferredSize(new java.awt.Dimension(0, 0));
 
-        jLabel2.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Tahoma", 1, 24));
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setText("Welcome to the HomeNet App");
         jLabel2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
 
-        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 14));
         jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel3.setText("This wizard will help you setup and configure your HomeNet");
         jLabel3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
@@ -169,7 +169,6 @@ public class SetupWizardGui extends javax.swing.JPanel {
 
         apiKeyLabel1.setText("API Key:");
 
-        serverTextField.setEditable(false);
         serverTextField.setText("homenet.me");
 
         jButton1.setText("Paste");
@@ -360,15 +359,16 @@ public class SetupWizardGui extends javax.swing.JPanel {
                 javax.swing.JOptionPane.showMessageDialog(null, "Invalid Server", "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
                 return;
             }
-            String reply = "Unkown Error";
+            boolean reply = false;
+            String error = "Unkown Error";
                 try{
-                    reply = (String)xmlrpcClient.execute("HomeNet.validateApikey", apikeyTextField.getText());
+                    reply = (Boolean) xmlrpcClient.execute("homenet.apikey.validate", apikeyTextField.getText());
                 } catch (Exception e){
-                    reply = "Exception: "+e.getMessage();
+                    error = "Exception: "+e.getMessage();
                 }
               
-              if(!reply.equals("true")){
-                 javax.swing.JOptionPane.showMessageDialog(null, reply, "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
+              if(reply == false){
+                 javax.swing.JOptionPane.showMessageDialog(null, error, "Error", javax.swing.JOptionPane.ERROR_MESSAGE); 
                  return;
               }
             

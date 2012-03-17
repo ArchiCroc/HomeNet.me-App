@@ -1,0 +1,13 @@
+client.server = localhost
+client.apikey = f3c55bde077cf63af3d352ba1a506f5cb3a886de
+server.enabled = true
+server.upnp = true
+server.port = 2443
+config.done = true
+packet.tonode = 1
+packet.todevice = 0
+packet.fromnode = 255
+packet.fromdevice = 0
+packet.command = 8
+packet.payload = test
+ports.serial = COM3

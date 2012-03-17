@@ -28,16 +28,16 @@ import java.util.*;
  * @author mdoll
  */
 public class XmlrpcCalls {
-    
+
     HomeNetApp app;
-    
-    public XmlrpcCalls(){
+
+    public XmlrpcCalls() {
     }
-    
-    public XmlrpcCalls(HomeNetApp app){
+
+    public XmlrpcCalls(HomeNetApp app) {
         this.app = app;
     }
-    
+
     public String testConnection(String value) {
         //  apikeyMsg("Remote Command");
         return "true";
@@ -48,43 +48,41 @@ public class XmlrpcCalls {
         return 1;
     }
 
-public int getNodeId(){
+    public int getNodeId() {
 
-     return app.homenet.getNodeId();
-}
+        return app.homenet.getNodeId();
+    }
 
-public String getApikey(){
+    public String getApikey() {
+        System.out.println("Api Key Requested: "+app.clientApiKey);
+        return app.clientApiKey;
+    }
 
-     return app.config.getString("setting.apikey");
-}
+    public String packet(java.util.Map value) {
+        return send(value);
+    }
 
-public String packet(java.util.Map value){
-  return send(value);
-}
+    public String send(java.util.Map value) {
+        //apikeyMsg("Remote Command");
 
-public String send(java.util.Map value){
-     //apikeyMsg("Remote Command");
-     
-     
-     
-     String p = (String)value.get("packet");
-    // println(p);
-     byte[] b = Base64.decodeBase64(p.getBytes());
+        String p = (String) value.get("packet");
+        // println(p);
+        byte[] b = Base64.decodeBase64(p.getBytes());
 
- // println("Server Reply: "+homeNetXmlrpcClient.execute("HomeNet.addPacket", send)); */
-     
-     Packet packet = new Packet(b);
-     
-    // debugPacket(packet);
-     try {
-        ((PortXmlrpc)app.homenet.getPort("xmlrpc")).receive(packet);
-     } catch (Exception e){
-       e.printStackTrace();
-      //   return e.toString();
-     }
-     
-     
-     
-     return "true";
-}
+        // println("Server Reply: "+homeNetXmlrpcClient.execute("HomeNet.addPacket", send)); */
+
+        Packet packet = new Packet(b);
+
+        // debugPacket(packet);
+        try {
+            ((PortXmlrpc) app.homenet.getPort("xmlrpc")).receive(packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            //   return e.toString();
+        }
+
+
+
+        return "true";
+    }
 }

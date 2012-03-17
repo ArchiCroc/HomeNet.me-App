@@ -84,7 +84,7 @@ public class HomeNetAppGui extends javax.swing.JFrame {
     SendPacketFrame.setIconImage(Image);
         
         
-       redirectSystemStreams();
+       //redirectSystemStreams();//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         System.err.println("test");
         SettingsDialog.setLocationRelativeTo(null);
 
@@ -1261,14 +1261,15 @@ public class HomeNetAppGui extends javax.swing.JFrame {
                     //
 
                     XmlrpcClient xmlrpcClient = new XmlrpcClient(serverTextField.getText(), apiKeyTextField.getText());
-                    String reply = (String) xmlrpcClient.execute("HomeNet.validateApikey", apiKeyTextField.getText());
+                    boolean reply = (Boolean) xmlrpcClient.execute("homenet.validate.apikey", apiKeyTextField.getText());
 
-                    if (!reply.equals("true")) {
-                        JOptionPane.showMessageDialog(null, reply, "Error", JOptionPane.ERROR_MESSAGE);
-                        return;
-                    } else {
+                    if (reply == true) {
                         JOptionPane.showMessageDialog(null, "Successfuly connected to "+serverTextField.getText(), "Success", JOptionPane.INFORMATION_MESSAGE);
                         return;
+                    } else {
+                        JOptionPane.showMessageDialog(null, "Invalid Api Key", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                        
                     }
 
 
